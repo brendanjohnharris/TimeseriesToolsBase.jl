@@ -18,8 +18,7 @@ makedocs(;
                                   assets = String[],),
          pages = ["Home" => "index.md",
              "Types" => "types.md",
-             "Utils" => "utils.md",
-             "Others" => "others.md"],)
+             "Utils" => "utils.md"],)
 
 deploydocs(;
            repo = "github.com/brendanjohnharris/TimeseriesToolsBase.jl",
