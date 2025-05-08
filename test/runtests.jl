@@ -47,10 +47,4 @@ end
 
 include("Types.jl")
 include("Utils.jl")
-include("IO.jl")
 include("Unitful.jl")
-include("SpikeTrains.jl")
-include("Operators.jl")
-include("MakieExt.jl")
-include("TimeseriesSurrogatesExt.jl")
-include("Extensions.jl")
