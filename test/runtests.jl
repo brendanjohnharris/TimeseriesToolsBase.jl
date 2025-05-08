@@ -16,64 +16,33 @@ using TestItemRunner
 end
 
 @testitem "Spectra" begin
-    using Unitful, CairoMakie
+    using Unitful
     # Define a test time series
-    fs = 1000
-    t = range(0, stop = 1, length = fs + 1)
-    x = 0.8 .* sin.(2 * π * 50 * t) + 1.1 .* sin.(2 * π * 100 * t)
-    ts = x = TimeseriesTools.TimeSeries(t, x)
-    f_min = fs / 100
-    Pxx = powerspectrum(ts, f_min)
+    fs = 0.1:0.1:100
+    S = 1.0 ./ fs
+    Pxx = Spectrum(fs, S)
     @test Pxx isa RegularSpectrum
+    # ........and other funcs
+end
 
-    xu = set(x, 𝑡 => ustripall(t) * u"s")
-    Pxu = @test_nowarn powerspectrum(xu, f_min)
-    @test unit(eltype(Pxu)) == u"s"
-    @test unit(eltype(lookup(Pxu, 1))) == u"s^-1"
-    @test all(ustripall(Pxu) .≈ Pxx)
+@testitem "Unitful" begin
+    using Unitful
+    ts = (1:1000)u"s"
+    x = @test_nowarn TimeSeries(ts, randn(1000))
+    @test TimeSeries(ustripall(ts), collect(x), u"s") == x
+    @test x isa AbstractTimeSeries
+    @test x isa UnitfulTimeSeries
+    @test x isa RegularTimeSeries
+    @test x isa UnivariateTimeSeries
 
-    @test_throws "DomainError" powerspectrum(x, 1e-6)
+    @test step(x) == step(ts)
+    @test samplingrate(x) == 1 / step(ts)
+    @test times(x) == ts
+    @test duration(x) == -first(-(extrema(ts)...))
+    @test x[𝑡(1u"s" .. 10u"s")] == x[1:10]
+    @test x[𝑡 = 1:10] == x[1:10]
 
-    # Plotting
-    p = @test_nowarn lines(Pxx)
-
-    freqs = dims(Pxx, 𝑓)
-    peaks = findall(x -> x > maximum(Pxx) / 2, Pxx)
-    @test collect(freqs[peaks])≈[50.0, 100.0] rtol=1e-2
-
-    xx = hcat(ts, ts)
-    mts = ToolsArray(xx, (𝑡(t), Var(:)))
-    Pxx_mts = powerspectrum(mts, f_min)
-    @test Pxx_mts isa MultivariateSpectrum
-    @test Pxx_mts[:, 1] == Pxx_mts[:, 2] == Pxx
-
-    for i in axes(Pxx_mts, 2)
-        Pxx = Pxx_mts[:, i]
-        freqs = dims(Pxx, 𝑓)
-        peaks = findall(x -> x > maximum(Pxx) / 2, Pxx)
-        @test collect(freqs[peaks])≈[50.0, 100.0] rtol=1e-2
-    end
-
-    #  !!!Test padding
-    fs = 1000
-    t = range(0, stop = 1, length = fs + 1)
-    x = 0.8 .* sin.(2 * π * 50 * t) + 1.1 .* sin.(2 * π * 100 * t)
-    ts = x = TimeseriesTools.TimeSeries(t, x)
-    f_min = fs / 100
-    Pa = powerspectrum(ts, f_min; padding = 0)
-    Pb = powerspectrum(ts, f_min / 10; padding = 100)
-    @test Pb isa RegularSpectrum
-
-    freqs = dims(Pb, 𝑓)
-    peaks = findall(x -> x > maximum(Pb) / 2, Pb)
-    @test collect(freqs[peaks])≈[50.0, 100.0] rtol=1e-2
-
-    # @test 2 * sum(energyspectrum(x) .^ 2) .= sum(x .^ 2)
-    @test sum(x .^ 2) .* samplingperiod(x)≈sum(Pa) .* step(TimeseriesTools.freqs(Pa)) * 2 rtol=1e-3
-    @test sum(x .^ 2) .* samplingperiod(x)≈sum(Pb) .* step(TimeseriesTools.freqs(Pb)) * 2 rtol=1e-5
-    # # Plotting
-    # f = Figure() ax = Axis(f[1, 1]) @test_nowarn lines!(ax, TimeseriesTools.freqs(Pa), Pa)
-    # @test_nowarn lines!(ax, TimeseriesTools.freqs(Pb), Pb) save("tmp.pdf", f)
+    @test_nowarn rectify(x; dims = 𝑡)
 end
 
 include("Types.jl")

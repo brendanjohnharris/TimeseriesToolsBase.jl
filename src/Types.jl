@@ -52,7 +52,7 @@ end
     ToolsArray(data, dims, refdims, name, metadata)
 end
 
-# * Custom dimensions. Arrays with these dimensions will default to being reconstructed as
+# * Custom dimensions
 import DimensionalData: TimeDim, XDim, YDim, ZDim
 DimensionalData.@dim 𝑡 TimeDim "Time"
 DimensionalData.@dim 𝑥 XDim "x"
@@ -70,7 +70,7 @@ DimensionalData.@dim 𝑓 FrequencyDim "Frequency"
 
 """
     ToolsDim{T}
-An abstract type for custom macro-defined dimensions in `TimeseriesTools`. Analogous to
+An abstract type for custom macro-defined dimensions in `TimeseriesToolsBase`. Analogous to
 `DimensionalData.Dimension` for the purposes of `DimensionalData.@dim`.
 
 ## Examples
@@ -86,7 +86,7 @@ abstract type ToolsDim{T} <: DimensionalData.Dimension{T} end
 
 """
     ToolsDimension
-A union of all `Dimension` types that fall within the scope of `TimeseriesTools`. Analogous
+A union of all `Dimension` types that fall within the scope of `TimeseriesToolsBase`. Analogous
 to `DimensionalData.Dimension` for dispatch purposes.
 
 ## See also
@@ -104,7 +104,7 @@ DimensionalData.dimconstructor(dims::ToolsDimension) = ToolsArray
 
 """
     TDim{S, T}
-The TimeseriesTools version of `DimensionalData.Dim` (custom dimensions named with a symbol)
+The TimeseriesToolsBase version of `DimensionalData.Dim` (custom dimensions named with a symbol)
 
 ## Examples
 ```
@@ -278,7 +278,7 @@ Constructs a univariate time series with time `t` and data `x`. Alteratively, us
 
 ## Examples
 ```@example 1
-julia> using TimeseriesTools, Unitful;
+julia> using TimeseriesToolsBase, Unitful;
 julia> t = 1:100
 julia> x = rand(100)
 julia> ts = TimeSeries(t, x)

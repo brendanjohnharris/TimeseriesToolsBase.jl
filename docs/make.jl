@@ -1,27 +1,26 @@
-using TimeseriesTools
+using TimeseriesToolsBase
 using Unitful
 using Documenter
 
-DocMeta.setdocmeta!(TimeseriesTools, :DocTestSetup, :(using Unitful, TimeseriesTools);
+DocMeta.setdocmeta!(TimeseriesToolsBase, :DocTestSetup,
+                    :(using Unitful, TimeseriesToolsBase);
                     recursive = true)
 
 makedocs(;
-         modules = [TimeseriesTools],
+         modules = [TimeseriesToolsBase],
          authors = "brendanjohnharris <brendanjohnharris@gmail.com> and contributors",
-         repo = "https://github.com/brendanjohnharris/TimeseriesTools.jl/blob/{commit}{path}#{line}",
-         sitename = "TimeseriesTools.jl",
+         repo = "https://github.com/brendanjohnharris/TimeseriesToolsBase.jl/blob/{commit}{path}#{line}",
+         sitename = "TimeseriesToolsBase.jl",
          format = Documenter.HTML(;
                                   prettyurls = get(ENV, "CI", "false") == "true",
-                                  canonical = "https://brendanjohnharris.github.io/TimeseriesTools.jl",
+                                  canonical = "https://brendanjohnharris.github.io/TimeseriesToolsBase.jl",
                                   edit_link = "main",
                                   assets = String[],),
-         pages = [
-             "Home" => "index.md",
+         pages = ["Home" => "index.md",
              "Types" => "types.md",
              "Utils" => "utils.md",
-             "Others" => "others.md",
-         ],)
+             "Others" => "others.md"],)
 
 deploydocs(;
-           repo = "github.com/brendanjohnharris/TimeseriesTools.jl",
+           repo = "github.com/brendanjohnharris/TimeseriesToolsBase.jl",
            devbranch = "main",)

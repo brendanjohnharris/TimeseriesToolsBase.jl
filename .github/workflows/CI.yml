@@ -20,6 +20,7 @@ jobs:
         version:
           - '1'
           - '1.10'
+          - '1.6'
         os:
           - ubuntu-latest
           - macOS-latest
@@ -62,6 +63,6 @@ jobs:
       - run: |
           julia --project=docs -e '
             using Documenter: DocMeta, doctest
-            using TimeseriesTools
-            DocMeta.setdocmeta!(TimeseriesTools, :DocTestSetup, :(using TimeseriesTools); recursive=true)
-            doctest(TimeseriesTools)'
+            using TimeseriesToolsBase
+            DocMeta.setdocmeta!(TimeseriesToolsBase, :DocTestSetup, :(using TimeseriesToolsBase); recursive=true)
+            doctest(TimeseriesToolsBase)'

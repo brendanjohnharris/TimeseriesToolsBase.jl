@@ -90,7 +90,7 @@ end
     @test_nowarn display(x)
 end
 
-@testitem "TimeseriesTools.jl" begin
+@testitem "TimeseriesToolsBase.jl" begin
     ts = 1:100
     x = @test_nowarn Timeseries(ts, randn(100))
     @test x isa AbstractTimeSeries

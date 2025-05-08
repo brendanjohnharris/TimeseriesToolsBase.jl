@@ -1,17 +1,16 @@
 import DimensionalData.Dimensions.LookupArrays: At, Near
 import DimensionalData.Dimensions.Dimension
 import DimensionalData: print_array, _print_array_ctx, _print_indices_vec
-import Normalization: NormUnion, AbstractNormalization, nansafe
-using Peaks
 
-export times, samplingrate, duration, samplingperiod, UnitPower, dimname, dimnames,
-       describedim, describedims, describename, interlace, _buffer, buffer, window,
-       delayembed, circularmean, circularstd, circularvar, resultant,
-       resultantlength,
+export times, step, samplingrate, samplingperiod, duration, coarsegrain,
+       buffer, window, delayembed, rectifytime, rectify, matchdim, interlace,
        centraldiff!, centraldiff, centralderiv!, centralderiv,
        rightdiff!, rightdiff, rightderiv!, rightderiv,
-       rectify, phasegrad, addrefdim, addmetadata,
-       findpeaks, maskpeaks, align, upsample, matchdim, nansafe, coarsegrain
+       leftdiff!, leftdiff, leftderiv!, leftderiv,
+       abs, angle, resultant, resultantlength,
+       circularmean, circularvar, circularstd,
+       phasegrad,
+       addrefdim, addmetadata, align
 
 import LinearAlgebra.mul!
 function mul!(a::AbstractVector, b::AbstractTimeSeries, args...; kwargs...)
@@ -45,88 +44,6 @@ function print_array(io::IO, mime,
 
     _print_indices_vec(io, o...)
     Base.print_matrix(_print_array_ctx(io, T), description.(frame))
-end
-
-function Base.stack(D::DimensionalData.Dimension,
-                    args::AbstractVector{<:AbstractToolsArray};
-                    dims = nothing, kwargs...)
-    x = first(args) # Is this allocating?
-
-    isnothing(dims) && (dims = ndims(x) + 1)
-    if !all([size(x)] .== size.(args))
-        error("Input arrays must have the same dimensionality and size")
-    end
-    unidims = DimensionalData.dims(first(args))
-    if !all(DimensionalData.dims.(args) .== [unidims])
-        error("Input arrays must have the same dimensions")
-    end
-    if dims isa Val && typeof(dims).parameters[1] isa Integer
-        dims = typeof(dims).parameters[1]
-    end
-    if !(dims isa Integer) && !(dims isa Val)
-        idx = DimensionalData.dims(x) isa dims ? 1 :
-              findfirst(isa.(DimensionalData.dims(x), [dims]))
-        isnothing(idx) && error("Dimension $dims not found in input array")
-        dims = first(idx)
-    end
-    outsize = size(x) |> collect
-    insert!(outsize, dims, length(D))
-
-    X = Array{eltype(x), length(outsize)}(undef, Tuple(outsize))
-
-    for (i, _x) in enumerate(eachslice(X; dims, drop = false))
-        _x .= args[i]
-    end
-
-    ds = Vector{Any}([DimensionalData.dims(x)...])
-    insert!(ds, dims, D)
-    y = ToolsArray(X, (ds...,); refdims = refdims(x), name = name(x),
-                   metadata = metadata(x))
-    return y
-end
-
-"""
-    Base.cat(D::DimensionalData.Dimension, args...; kwargs...)
-Concatenate the arrays given in `args...`, and give the resulting extra axis dimensions `D`.
-Note that unlike `Base.cat` without the first `Dim` argument, this increments all existing dimensions greater than `dims` by one (so N n×n arrays concatenated at `dims=1` will result in an N×n×n array).
-`args...` can be a splatted collection of `ToolsArray`s, but this will give the same behaviour as if `args...` is a single vector of `ToolsArray`s; the latter is much more performant.
-"""
-function Base.cat(D::DimensionalData.Dimension, x::AbstractToolsArray,
-                  y::AbstractToolsArray,
-                  args...;
-                  dims = nothing,
-                  kwargs...) # TODO Refactor this method, to call the method above.
-    isnothing(dims) && (dims = ndims(x) + 1)
-    if !all([size(x)] .== size.(args))
-        error("Input arrays must have the same dimensionality and size")
-    end
-    if dims isa Val && typeof(dims).parameters[1] isa Integer
-        dims = typeof(dims).parameters[1]
-    end
-    if !(dims isa Integer) && !(dims isa Val)
-        idx = DimensionalData.dims(x) isa dims ? 1 :
-              findfirst(isa.(DimensionalData.dims(x), [dims]))
-        isnothing(idx) && error("Dimension $dims not found in input array")
-        dims = first(idx)
-    end
-    function rf(x)
-        r = size(x) |> collect
-        insert!(r, dims, 1)
-        reshape(x, r...)
-    end
-    _x = rf(x.data)
-    _y = rf(y.data)
-    _args = rf.(getfield.(args, [:data]))
-    x′ = cat(_x, _y, _args...; dims, kwargs...)
-    ds = Vector{Any}([DimensionalData.dims(x)...])
-    insert!(ds, dims, D)
-    y = ToolsArray(x′, (ds...,); refdims = refdims(x), name = name(x),
-                   metadata = metadata(x))
-    # if hasdim(y, 𝑡)
-    #     ts = times(y)
-    #     y = set(y, 𝑡=> ts .- minimum(ts))
-    # end
-    return y
 end
 
 """
@@ -199,7 +116,7 @@ Returns the duration of the [`AbstractTimeSeries`](@ref) `x`.
 julia> t = 1:100;
 julia> x = rand(100);
 julia> ts = TimeSeries(t, x);
-julia> TimeseriesTools.duration(ts) == 99
+julia> TimeseriesToolsBase.duration(ts) == 99
 ```
 """
 duration(x::AbstractTimeSeries) = (last ∘ times)(x) - (first ∘ times)(x)
@@ -219,53 +136,6 @@ julia> IntervalSets.Interval(ts) == (1..100)
 ```
 """
 IntervalSets.Interval(x::AbstractTimeSeries) = (first ∘ times)(x) .. (last ∘ times)(x)
-
-# function 𝑝(x::RegularTimeSeries)
-#     dur = duration(x)
-#     if ~isnothing(unit(dur))
-#         return sum(x.^2)/dur
-#     else
-#         @warn "No time units found for unit power normalization. Assuming seconds."
-#         return sum(x.^2)/(dur*u"s")
-#     end
-# end
-𝑝(x::RegularTimeSeries) = sum(x .^ 2) / duration(x) # * Assume seconds.
-# TODO !!!
-"""
-    UnitPower <: AbstractNormalization
-
-A normalization that sets the total power of a signal to unity.
-
-# Fields
-- `dims`: The dimensions to normalize over.
-- `p`: Computed normalization parameters.
-- `𝑝`: A function that returns the power from a given time series.
-- `𝑓`: The normalization method
-- `𝑓⁻¹`: The inverse normalization method.
-
-"""
-mutable struct UnitPower{T} <: AbstractNormalization{T}
-    dims::Any
-    p::NTuple{1, AbstractArray{T}}
-    𝑝::NTuple{1, Function}
-    𝑓::Function
-    𝑓⁻¹::Function
-end;
-
-function UnitPower{T}(; dims = nothing,
-                      p = (Vector{T}(),),
-                      𝑝 = (𝑝,),
-                      𝑓 = (x, 𝑃) -> x .= x ./ sqrt.(𝑃),
-                      𝑓⁻¹ = (y, 𝑃) -> y .= y .* sqrt.(𝑃)) where {T}
-    UnitPower(((isnothing(dims) || length(dims) < 2) ? dims : sort(dims)), p, 𝑝, 𝑓, 𝑓⁻¹)
-end
-
-UnitPower(; kwargs...) = UnitPower{Nothing}(; kwargs...);
-
-dimname(d::DimensionalData.Dimension) = name(d) |> string
-dimname(x::AbstractDimArray, dim) = dims(x, dim) |> dimname
-dimname(x::AbstractDimArray) = map(dimname, dims(x))
-dimnames = dimname
 
 function describedim(d::DimensionalData.Dimension)
     if d isa DimensionalData.TimeDim
@@ -392,7 +262,8 @@ function delayembed(x::UnivariateRegular, n, τ, p = 1, args...; kwargs...)
     δt = τ * p * step(x)
     delays = (-(δt * (n - 1))):δt:0
     y = set.(y, [𝑡 => Dim{:delay}(delays)])
-    y = cat(𝑡(ts), y..., dims = Dim{:delay})
+    y = set(y, 𝑡 => ts) # Set time index to start time of each time series
+    y = stack(y, dims = 1) # dims=1 so time is on first dimension
 end
 
 function rectify(ts::DimensionalData.Dimension; tol = 4, zero = false, extend = false,
@@ -650,65 +521,6 @@ function addmetadata(X::AbstractDimArray; kwargs...)
             refdims = DimensionalData.refdims(X))
 end
 
-function findpeaks(x::DimensionalData.AbstractDimVector, w = 1; minprom = nothing,
-                   maxprom = nothing,
-                   strict = true, N = nothing)
-    minprom isa Function && (minprom = minprom(x))
-    maxprom isa Function && (maxprom = maxprom(x))
-    _pks, vals = findmaxima(x, w)
-    pks, proms = peakproms(_pks, x; minprom, maxprom, strict)
-    if !isempty(pks)
-        pks, widths, leftedge, rightedge = peakwidths(pks, x, proms)
-        leftedge = [only(lookup(x))[ceil(Int, l)] for l in leftedge]
-        rightedge = [only(lookup(x))[floor(Int, r)] for r in rightedge]
-    else
-        leftedge = []
-        rightedge = []
-    end
-    idxs = indexin(pks, _pks) .|> Int
-    vals = vals[idxs]
-    proms = set(vals, proms)
-    widths = set(vals, [l .. r for (l, r) in zip(leftedge, rightedge)])
-    if !isnothing(N)
-        ps = sortperm(proms; rev = true)
-        vals = vals[ps[1:N]]
-        widths = widths[ps[1:N]]
-    end
-    return vals, proms, widths
-end
-
-function findpeaks(x::DimensionalData.AbstractDimArray, args...; dims = 1, kwargs...)
-    @assert length(dims) == 1
-    _dims = DimensionalData.dims(x)[DimensionalData.dims(x) .!= [DimensionalData.dims(x,
-                                                                                      dims)]]
-    P = findpeaks.(eachslice(x; dims = _dims); kwargs...)
-    return [getindex.(P, i) for i in 1:3] # vals, proms, widths
-end
-
-function maskpeaks!(y, x::DimensionalData.AbstractDimVector, args...; kwargs...)
-    vals, proms, widths = findpeaks(x, args...; kwargs...)
-    y .= 0
-    for (i, I) in enumerate(widths)
-        y[I] .= i
-    end
-    return y
-end
-function maskpeaks(x::DimensionalData.AbstractDimVector, args...; kwargs...)
-    y = set(x, similar(x, Int))
-    maskpeaks!(y, x, args...; kwargs...)
-    return y
-end
-
-function maskpeaks(x::DimensionalData.AbstractDimArray, args...; dims = 1, kwargs...)
-    @assert length(dims) == 1
-    _dims = DimensionalData.dims(x)[DimensionalData.dims(x) .!= [DimensionalData.dims(x,
-                                                                                      dims)]]
-    y = similar(x, Int)
-    maskpeaks!.(eachslice(y; dims = _dims), eachslice(x; dims = _dims), args...;
-                kwargs...)
-    return y
-end
-
 """
     align(x::AbstractDimArray, ts, dt; dims = 1)
 
@@ -840,91 +652,3 @@ function coarsegrain(X::AbstractDimArray; dims = nothing,
 
     return X
 end
-
-import Base.Threads: threading_run, threadpoolsize
-macro threads_compat(args...)
-    na = length(args)
-    if na == 2
-        sched, ex = args
-        if sched isa QuoteNode
-            sched = sched.value
-        elseif sched isa Symbol
-            # for now only allow quoted symbols
-            sched = nothing
-        end
-        # if sched !== :static && sched !== :dynamic && sched !== :greedy
-        #     throw(ArgumentError("unsupported schedule argument in @threads"))
-        # end
-    elseif na == 1
-        sched = :default
-        ex = args[1]
-    else
-        throw(ArgumentError("wrong number of arguments in @threads"))
-    end
-    if !(isa(ex, Expr) && ex.head === :for)
-        throw(ArgumentError("@threads requires a `for` loop expression"))
-    end
-    if !(ex.args[1] isa Expr && ex.args[1].head === :(=))
-        throw(ArgumentError("nested outer loops are not currently supported by @threads"))
-    end
-    return Base.Threads._threadsfor(ex.args[1], ex.args[2], sched)
-end
-
-PROGRESSMAP_BACKEND = :ProgressLogging
-function _progressmap(f, backend::T, args...; kwargs...) where {T}
-    throw(ArgumentError("Backend `$(only(T.parameters))` not implemented"))
-end
-function _progressmap(f, ::Val{:Threads}, As...; kwargs...)
-    _progressmap(f, Val(:ProgressLogging), As...; kwargs...)
-end
-function _progressmap(f, ::Val{:ProgressLogging}, As...; name = "progressmap",
-                      schedule = :dynamic)
-    if VERSION < v"1.11" && schedule == :greedy
-        ArgumentError("`:greedy` scheduling is not supported in Julia ≥ 1.11")
-    end
-    if VERSION < v"1.8" && schedule == :dynamic
-        ArgumentError("`:dynamic` scheduling is not supported in Julia ≥ 1.8")
-    end
-    DimensionalData.comparedims(As...)
-    T = typejoin(Base.return_types(f, eltype.(As))...)
-    out = similar(first(As), T)
-    icargs = zip(As...) |> enumerate |> collect
-
-    threadlog = 0
-    threadmax = length(icargs)
-    l = Threads.ReentrantLock()
-
-    @withprogress name=name begin
-        function _f(i, cargs)
-            @inbounds out[i] = f(cargs...)
-            lock(l)
-            try
-                threadlog += 1
-                @logprogress threadlog / threadmax
-            finally
-                unlock(l)
-            end
-        end
-        if schedule == :static
-            @threads_compat :static for (i, cargs) in icargs
-                _f(i, cargs)
-            end
-        elseif schedule == :dynamic
-            @threads_compat :dynamic for (i, cargs) in icargs
-                _f(i, cargs)
-            end
-        elseif schedule == :greedy
-            @threads_compat :greedy for (i, cargs) in icargs
-                _f(i, cargs)
-            end
-        else
-            ArgumentError("Unknown schedule type '$schedule' in `progressmap`")
-        end
-    end
-    return out
-end
-
-function progressmap(f, args...; backend = PROGRESSMAP_BACKEND, kwargs...)
-    _progressmap(f, Val(backend), args...; kwargs...)
-end
-export progressmap

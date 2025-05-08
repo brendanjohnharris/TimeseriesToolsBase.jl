@@ -1,9 +1,9 @@
 ```@meta
-CurrentModule = TimeseriesTools
+CurrentModule = TimeseriesToolsBase
 ```
 
-# TimeseriesTools
+# TimeseriesToolsBase
 
-Welcome to the documentation for [TimeseriesTools](https://github.com/brendanjohnharris/TimeseriesTools.jl), a Julia package for working with time series data.
+Welcome to the documentation for [TimeseriesToolsBase](https://github.com/brendanjohnharris/TimeseriesToolsBase.jl), a Julia package for working with time series data.
 
 

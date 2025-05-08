@@ -5,13 +5,17 @@
     @test all(collect(times(z)) .== 0.0:0.05:1.0)
 end
 
-@testitem "Cat" begin
+@testitem "Cat and stack" begin
     x = TimeSeries(0.1:0.1:10, Var(1:100), randn(100, 100))
-    y = cat(𝑓(1:2), x, x)
+    y = cat(x, x; dims = 𝑓(1:2))
     @test dims(y, 3) == 𝑓(1:2)
-    z = stack(𝑓(1:2), [x, x])
+
+    z = ToolsArray([x, x], 𝑓(1:2))
+    z = stack(z)
     @test y == z
-    y = stack(𝑓(1:2), [x, x]; dims = 1)
+
+    z = ToolsArray([x, x], 𝑓(1:2))
+    y = stack(z; dims = 1)
     @test dims(y, 1) == 𝑓(1:2)
 end
 
@@ -44,7 +48,7 @@ end
 end
 
 @testitem "Rectification" begin
-    import TimeseriesTools: rectifytime
+    import TimeseriesToolsBase: rectifytime
     ts = 0.1:0.1:1000
     x = TimeSeries(ts .+ randn(length(ts)) .* 1e-10, sin)
     @test issorted(times(x))
@@ -77,9 +81,9 @@ end
 end
 
 @testitem "Central differences" begin
-    using DSP, StatsBase
-    x = colorednoise(0.01:0.01:10)
-    X = cat(Var(1:10), [colorednoise(0.1:0.1:100) for _ in 1:10]...)
+    sig(n) = TimeSeries(range(0.01, 0.01, length = n), cumsum(randn(n)))
+    x = sig(1000)
+    X = cat((sig(1000) for _ in 1:10)...; dims = Var(1:10))
 
     dx = @test_nowarn centraldiff(x)
     @test all(dx[2:(end - 1)] .== (parent(x)[3:end] - parent(x)[1:(end - 2)]) / 2)
@@ -93,21 +97,13 @@ end
     dX = @test_nowarn centralderiv(X)
     @test all(dX[2:(end - 1), :] .==
               ((parent(X)[3:end, :] - parent(X)[1:(end - 2), :]) / 2) ./ samplingperiod(X))
-
-    x = @test_nowarn Timeseries(0.1:0.1:1000, sin)
-    𝑓 = instantaneousfreq(x)
-    @test std(𝑓[2500:(end - 2500)]) < 0.001
-    @test mean(𝑓[2500:(end - 2500)])≈1 / 2π rtol=1e-5
-
-    ϕ = analyticphase(x)[1000:(end - 1000)]
-    dϕ = @test_nowarn centraldiff(ϕ; grad = phasegrad)
-    @test sum(dϕ .!= centraldiff(ϕ)) > 4000
 end
 
 @testitem "Left and right derivatives" begin
-    import TimeseriesTools: leftdiff, rightdiff
-    x = colorednoise(0.01:0.01:10)
-    X = cat(Var(1:10), [colorednoise(0.1:0.1:100) for _ in 1:10]...)
+    import TimeseriesToolsBase: leftdiff, rightdiff
+    sig(n) = TimeSeries(range(0.01, 0.01, length = n), cumsum(randn(n)))
+    x = sig(1000)
+    X = cat((sig(1000) for _ in 1:10)...; dims = Var(1:10))
 
     dx = @test_nowarn leftdiff(x)
     @test all(parent(dx)[2:(end)] .== (parent(x)[2:end] - parent(x)[1:(end - 1)]))
@@ -146,7 +142,7 @@ end
 end
 
 @testitem "coarsegrain" begin
-    using StatsBase
+    using Statistics
     X = repeat(1:11, 1, 100)
     C = coarsegrain(X, dims = 1)
     M = mean(C, dims = 3)
@@ -200,85 +196,3 @@ end
     @test length(unique(dims.(Y))) == 1
     @test dims(Y[1], 𝑡) == 𝑡(ts)
 end
-
-@testitem "findpeaks" begin
-    x = TimeseriesTools.TimeSeries(0.1:0.1:100, x -> sin(x .* 2π / 4))
-    peaks = spiketrain(range(start = 1, stop = 100, step = 4))
-    pks, proms = findpeaks(x)
-    @test times(pks) == times(peaks)
-    @test pks isa ToolsArray{<:Float64}
-    @test proms isa ToolsArray{<:Float64}
-
-    xx = cat(Var(1:2), x, x .+ 1.0)
-
-    # * test rebuild
-    identity.(eachslice(xx; dims = 1)) isa ToolsArray
-
-    pks, proms = findpeaks(xx)
-    @test pks isa ToolsArray{<:ToolsArray}
-    @test proms isa ToolsArray{<:ToolsArray}
-    @test times(pks[1]) == times(peaks)
-    @test times(pks[2]) == times(peaks)
-    @test all(proms[1][2:(end - 1)] .== 2)
-
-    m = @test_nowarn maskpeaks(x)
-    M = @test_nowarn maskpeaks(xx)
-    @test M[:, 2] == m
-
-    # * With no-peak signal
-    xx[:, 2] .= 1
-    @test_nowarn findpeaks(xx)
-    M = @test_nowarn maskpeaks(xx)
-end
-
-@testitem "ProgressLogging progressmap" begin
-    using DimensionalData
-    TimeseriesTools.PROGRESSMAP_BACKEND = :ProgressLogging
-    S = 1:1000
-    g = x -> (sleep(0.001); randn())
-    out = progressmap(g, S)
-
-    # * Check for matrix
-    S = randn(10, 10)
-    h(x) = (randn(1000, 1000)^10)^(-10)
-    out = progressmap(h, S)
-    @test out isa Matrix{Matrix{Float64}}
-
-    # * Check for DimArray
-    S = DimArray(randn(10, 10), (X(1:10), Y(1:10)))
-    out = progressmap(h, S)
-    @test out isa DimMatrix{Matrix{Float64}}
-end
-@testitem "progressmap schedulers" begin
-    TimeseriesTools.PROGRESSMAP_BACKEND = :Threads
-
-    # * Compare to Threads.@threads. Guess you should have some threads.
-    function f(X)
-        return sum(X * X)
-    end
-    Ns = 1:100:1000
-    Xs = [rand(n, n) for n in Ns]
-    @test progressmap(f, Xs, schedule = :dynamic) == progressmap(f, Xs, schedule = :static)
-
-    Ns = range(0, 1, length = 100)
-
-    if Threads.nthreads() > 2 && VERSION ≥ v"1.11"
-        _, bs = @timed progressmap(sleep, Ns, schedule = :static)
-        _, bd = @timed progressmap(sleep, Ns, schedule = :dynamic)
-        # _, bg = @timed progressmap(sleep, Ns, schedule = :greedy)
-
-        @test bs > bd # > bg
-    end
-end
-
-# begin
-#     D = DimensionalData.Dim{:x}(1:100)
-#     T = TimeseriesTools.Dim{:x}(1:100)
-#     @test D != T
-#     @test all(D .== T)
-#     @test DimensionalData.name(T) == DimensionalData.name(D)
-#     𝑡(1:10)
-#     𝑥(1:10)
-#     𝑦(1:10)
-#     𝑧(1:10)
-# end
