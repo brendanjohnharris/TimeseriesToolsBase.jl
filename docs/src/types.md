@@ -1,5 +1,5 @@
 ```@index
-Pages = ["types.md"]
+Pages = ["toolsarrays.md"]
 ```
 The `TimeseriesToolsBase` package provides a standardized collection of types designed for handling various types of time-series data.
 Defining consistent types for time series provides three key benefits:
@@ -26,5 +26,5 @@ Below is a full list of types defined in this package.
 
 ```@autodocs
 Modules = [TimeseriesToolsBase]
-Pages   = ["Types.jl", "Spectrograms.jl"]
+Pages   = ["ToolsArrays.jl", "Spectrograms.jl"]
 ```

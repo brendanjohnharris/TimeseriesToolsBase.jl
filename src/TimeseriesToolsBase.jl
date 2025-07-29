@@ -1,21 +1,27 @@
 module TimeseriesToolsBase
 
-import Unitful.unit
-
 using Reexport
 using DimensionalData
 using IntervalSets
 @reexport using DimensionalData
 @reexport using IntervalSets
 
-function __init__()
-    ENV["UNITFUL_FANCY_EXPONENTS"] = true
-end
+include("ToolsArrays.jl")
+@reexport using TimeseriesToolsBase.ToolsArrays
 
-include("Types.jl")
-include("Utils.jl")
+include("TimeSeries.jl")
+@reexport using TimeseriesToolsBase.TimeSeries
+
 include("Spectra.jl")
-include("Unitful.jl")
-include("Dates.jl")
+@reexport using TimeseriesToolsBase.Spectra
+
+include("UnitfulTools.jl")
+@reexport using TimeseriesToolsBase.UnitfulTools
+
+include("Utils.jl")
+@reexport using TimeseriesToolsBase.Utils
+
+include("DatesTools.jl")
+@reexport using TimeseriesToolsBase.DatesTools
 
 end

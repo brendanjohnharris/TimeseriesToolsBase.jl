@@ -1,3 +1,8 @@
+module DatesTools
+
+using TimeseriesToolsBase.ToolsArrays
+using DimensionalData
+
 using Dates
 
 export DateIndex, DateTimeIndex, DateTimeSeries
@@ -13,3 +18,4 @@ DateTimeIndex = Tuple{A,
 DateTimeSeries = AbstractToolsArray{T, N, <:DateTimeIndex, B} where {T, N, B}
 
 unit(::DateTimeSeries) = NoUnits
+end

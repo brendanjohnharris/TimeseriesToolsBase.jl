@@ -1,7 +1,6 @@
-import DimensionalData: Dimension, TimeDim, NoName, NoMetadata, format
+module TimeSeries
 
-export AbstractToolsArray, ToolsArray,
-       AbstractTimeSeries, AbstractTS,
+export AbstractTimeSeries, AbstractTS,
        UnivariateTimeSeries, UnivariateTS,
        MultivariateTimeSeries, MultivariateTS,
        RegularTimeSeries, RegularTS,
@@ -9,134 +8,16 @@ export AbstractToolsArray, ToolsArray,
        IrregularTimeSeries, IrregularTS,
        TimeIndex, RegularIndex, RegularTimeIndex,
        IrregularIndex, IrregularTimeIndex,
-       TimeSeries, Timeseries, TS,
-       stitch,
-       IrregularBinaryTimeSeries, SpikeTrain, MultivariateSpikeTrain, UnivariateSpikeTrain,
-       spiketrain, spiketimes,
+       TimeSeries, Timeseries,
        MultidimensionalIndex, MultidimensionalTimeSeries, MultidimensionalTS,
-       ToolsDimension, ToolsDim, TDim,
-       𝑡, 𝑥, 𝑦, 𝑧, 𝑓, Var, Obs
+       SpikeTrain, MultivariateSpikeTrain, UnivariateSpikeTrain,
+       spiketrain, spiketimes
 
-"""
-A local type to avoid overloading and piracy issues with DimensionalData.jl
-"""
-abstract type AbstractToolsArray{T, N, D, A} <: DimensionalData.AbstractDimArray{T, N, D, A} end
+using ..ToolsArrays
+using DimensionalData
+import DimensionalData: Dimension, TimeDim
 
-AbstractDimVector = AbstractToolsArray{T, 1} where {T}
-AbstractDimMatrix = AbstractToolsArray{T, 2} where {T}
-
-struct ToolsArray{T, N, D <: Tuple, R <: Tuple, A <: AbstractArray{T, N}, Na, Me} <:
-       AbstractToolsArray{T, N, D, A}
-    data::A
-    dims::D
-    refdims::R
-    name::Na
-    metadata::Me
-end
-
-function ToolsArray(data::A, dims::Tuple{D, Vararg};
-                    refdims::R = (), name::Na = NoName(),
-                    metadata::M = NoMetadata()) where {D <: DimensionalData.Dimension,
-                                                       R, A, Na, M}
-    ToolsArray(data, format(dims, data), refdims, name, metadata)
-end
-
-ToolsArray(x::AbstractArray, D::DimensionalData.Dimension) = ToolsArray(x, (D,))
-
-function ToolsArray(D::DimensionalData.DimArray)
-    ToolsArray(D.data, D.dims, D.refdims, D.name, D.metadata)
-end
-
-@inline function DimensionalData.rebuild(A::ToolsArray, data::AbstractArray, dims::Tuple,
-                                         refdims::Tuple, name, metadata)
-    ToolsArray(data, dims, refdims, name, metadata)
-end
-
-# * Custom dimensions
-import DimensionalData: TimeDim, XDim, YDim, ZDim
-DimensionalData.@dim 𝑡 TimeDim "Time"
-DimensionalData.@dim 𝑥 XDim "x"
-DimensionalData.@dim 𝑧 YDim "y"
-DimensionalData.@dim 𝑦 ZDim "z"
-
-abstract type VariableDim{T} <: Dimension{T} end
-DimensionalData.@dim Var VariableDim "Var"
-
-abstract type ObservationDim{T} <: Dimension{T} end
-DimensionalData.@dim Obs ObservationDim "Obs"
-
-abstract type FrequencyDim{T} <: Dimension{T} end
-DimensionalData.@dim 𝑓 FrequencyDim "Frequency"
-
-"""
-    ToolsDim{T}
-An abstract type for custom macro-defined dimensions in `TimeseriesToolsBase`. Analogous to
-`DimensionalData.Dimension` for the purposes of `DimensionalData.@dim`.
-
-## Examples
-```
-DimensionalData.@dim MyDim ToolsDim "My dimension" # Defines a new `ToolsDim <: ToolsDimension`
-```
-
-## See also
-- [`ToolsDimension`](@ref)
-- [`TDim`](@ref)
-"""
-abstract type ToolsDim{T} <: DimensionalData.Dimension{T} end
-
-"""
-    ToolsDimension
-A union of all `Dimension` types that fall within the scope of `TimeseriesToolsBase`. Analogous
-to `DimensionalData.Dimension` for dispatch purposes.
-
-## See also
-- [`ToolsDim`](@ref)
-- [`TDim`](@ref)
-"""
-ToolsDimension = Union{𝑡, 𝑥, 𝑧, 𝑦, 𝑓, Var, Obs, ToolsDim}
-
-function DimensionalData.dimconstructor(::Tuple{ToolsDimension,
-                                                Vararg{DimensionalData.Dimension}})
-    ToolsArray
-end
-DimensionalData.dimconstructor(::Tuple{<:ToolsDimension, Vararg}) = ToolsArray
-DimensionalData.dimconstructor(dims::ToolsDimension) = ToolsArray
-
-"""
-    TDim{S, T}
-The TimeseriesToolsBase version of `DimensionalData.Dim` (custom dimensions named with a symbol)
-
-## Examples
-```
-```
-
-## See also
-- [`ToolsDim`](@ref)
-- [`ToolsDimension`](@ref)
-"""
-struct TDim{S, T} <: ToolsDim{T}
-    val::T
-    function TDim{S}(val; kw...) where {S}
-        if length(kw) > 0
-            val = DimensionalData.AutoVal(val, values(kw))
-        end
-        new{S, typeof(val)}(val)
-    end
-    function TDim{S}(val::AbstractArray; kw...) where {S}
-        if length(kw) > 0
-            val = DimensionalData.AutoLookup(val, values(kw))
-        end
-        TDim{S, typeof(val)}(val)
-    end
-    function TDim{S, T}(val::T) where {S, T}
-        new{S, T}(val)
-    end
-end
-TDim{S}() where {S} = TDim{S}(:)
-DimensionalData.name(::Type{<:TDim{S}}) where {S} = S
-DimensionalData.basetypeof(::Type{<:TDim{S}}) where {S} = TDim{S}
-
-TimeSeries(x::DimArray) = ToolsArray(x)
+Timeseries(x::DimArray) = ToolsArray(x)
 
 """
     TimeIndex
@@ -272,24 +153,24 @@ end
 spiketimes(x::AbstractArray) = x
 
 """
-    TimeSeries(t, x)
+    Timeseries(x, t)
 
-Constructs a univariate time series with time `t` and data `x`. Alteratively, use `TS(t, x)`
+Constructs a univariate time series with time `t` and data `x`.
 
 ## Examples
 ```@example 1
 julia> using TimeseriesToolsBase, Unitful;
 julia> t = 1:100
 julia> x = rand(100)
-julia> ts = TimeSeries(t, x)
+julia> ts = Timeseries(x, t)
 julia> ts isa typeintersect(UnivariateTimeSeries, RegularTimeSeries)
 ```
 """
-TimeSeries(t, x; kwargs...) = ToolsArray(x, (𝑡(t),); kwargs...)
-TimeSeries(t::TimeDim, x; kwargs...) = ToolsArray(x, (t,); kwargs...)
+Timeseries(x, t; kwargs...) = ToolsArray(parent(x), (𝑡(t),); kwargs...)
+Timeseries(x, t::TimeDim; kwargs...) = ToolsArray(parent(x), (t,); kwargs...)
 
 """
-    TimeSeries(t, v, x)
+    TimeSeries(x, t, v)
 
 Constructs a multivariate time series with time t, variable v, and data x.
 
@@ -298,55 +179,22 @@ Constructs a multivariate time series with time t, variable v, and data x.
 julia> t = 1:100;
 julia> v = [:a, :b, :c];
 julia> x = rand(100, 3);
-julia> mts = TimeSeries(t, v, x)
+julia> mts = Timeseries(x, t, v)
 julia> mts isa typeintersect(MultivariateTimeSeries, RegularTimeSeries)
 ```
 """
-function TimeSeries(t::TimeDim, v::Dimension, x; kwargs...)
-    ToolsArray(x, (t, v); kwargs...)
-end
-function TimeSeries(t::TimeDim, v, x; kwargs...)
-    ToolsArray(x, (t, Var(v)); kwargs...)
-end
-function TimeSeries(t, v::Dimension, x; kwargs...)
-    ToolsArray(x, (𝑡(t), v); kwargs...)
-end
-TimeSeries(t, v, x; kwargs...) = ToolsArray(x, (𝑡(t), Var(v)); kwargs...)
+Timeseries(x, t, v; kwargs...) = ToolsArray(x, (𝑡(t), Var(v)); kwargs...)
 
-function TimeSeries(t::TimeDim, a::Dimension,
-                    b::Dimension, x; kwargs...)
-    ToolsArray(x, (t, a, b); kwargs...)
+function Timeseries(x, t::TimeDim, dims::Vararg{<:Dimension}; kwargs...)
+    ToolsArray(parent(x), (t, dims...); kwargs...)
 end
-function TimeSeries(t, a::Dimension,
-                    b::Dimension, x; kwargs...)
-    ToolsArray(x, (𝑡(t), a, b); kwargs...)
+function Timeseries(x, t, dims::Vararg{<:Dimension}; kwargs...)
+    ToolsArray(parent(x), (𝑡(t), dims...); kwargs...)
 end
-
-import DimensionalData.data
-function data(x::AbstractTimeSeries)
-    _x = x.data
-    while _x isa AbstractTimeSeries
-        _x = _x.data
-    end
-    return _x
-end
-function TimeSeries(t, x::AbstractDimArray; kwargs...)
-    TimeSeries(t, DimensionalData.data(x); kwargs...)
-end
-function TimeSeries(t, v, x::AbstractDimArray; kwargs...)
-    TimeSeries(t, v, DimensionalData.data(x); kwargs...)
-end
-
-"""
-    TimeSeries(t, f::Function)
-
-Construct a time series by mapping a function `f` over the time points `t`.
-"""
-TimeSeries(t, f::Function; kwargs...) = TimeSeries(t, f.(t), kwargs...)
-
-const TS = Timeseries = TimeSeries
 
 convertconst(a, _) = a
 
 const UnivariateRegular = typeintersect(UnivariateTimeSeries, RegularTimeSeries)
 const MultivariateRegular = typeintersect(MultivariateTimeSeries, RegularTimeSeries)
+
+end

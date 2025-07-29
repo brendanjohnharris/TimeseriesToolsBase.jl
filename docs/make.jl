@@ -17,7 +17,7 @@ makedocs(;
                                   edit_link = "main",
                                   assets = String[],),
          pages = ["Home" => "index.md",
-             "Types" => "types.md",
+             "Types" => "toolsarrays.md",
              "Utils" => "utils.md"],)
 
 deploydocs(;

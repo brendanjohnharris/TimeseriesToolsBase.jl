@@ -1,6 +1,16 @@
+module Utils
+
+using IntervalSets
+using DimensionalData
+using ..ToolsArrays
+using ..TimeSeries
+using ..UnitfulTools
+
 import DimensionalData.Dimensions.LookupArrays: At, Near
 import DimensionalData.Dimensions.Dimension
 import DimensionalData: print_array, _print_array_ctx, _print_indices_vec
+using Unitful
+using Statistics
 
 export times, step, samplingrate, samplingperiod, duration, coarsegrain,
        buffer, window, delayembed, rectifytime, rectify, matchdim, interlace,
@@ -12,10 +22,10 @@ export times, step, samplingrate, samplingperiod, duration, coarsegrain,
        phasegrad,
        addrefdim, addmetadata, align
 
-import LinearAlgebra.mul!
-function mul!(a::AbstractVector, b::AbstractTimeSeries, args...; kwargs...)
-    mul!(a, b.data, args...; kwargs...)
-end
+# import LinearAlgebra.mul!
+# function mul!(a::AbstractVector, b::AbstractTimeSeries, args...; kwargs...)
+#     mul!(a, b.data, args...; kwargs...)
+# end
 
 Selectors = [:At, :Between, :Touches, :Near, :Where, :Contains]
 # Allow dims to be passed directly to selectors
@@ -55,7 +65,7 @@ Returns the time indices of the [`AbstractTimeSeries`](@ref) `x`.
 ```@example 1
 julia> t = 1:100;
 julia> x = rand(100);
-julia> ts = TimeSeries(t, x);
+julia> ts = Timeseries(x, t);
 julia> times(ts) == t
 ```
 """
@@ -70,7 +80,7 @@ Returns the step size (time increment) of a regularly sampled [`RegularTimeSerie
 ```@example 1
 julia> t = 1:100;
 julia> x = rand(100);
-julia> rts = TimeSeries(t, x);
+julia> rts = Timeseries(x, t);
 julia> step(rts) == 1
 ```
 """
@@ -85,7 +95,7 @@ Returns the sampling rate (inverse of the step size) of a regularly sampled [`Re
 ```@example 1
 julia> t = 1:100;
 julia> x = rand(100);
-julia> rts = TimeSeries(t, x);
+julia> rts = Timeseries(x, t);
 julia> samplingrate(rts) == 1
 ```
 """
@@ -100,7 +110,7 @@ Returns the sampling period (step size) of a regularly sampled [`RegularTimeSeri
 ```@example 1
 julia> t = 1:100;
 julia> x = rand(100);
-julia> rts = TimeSeries(t, x);
+julia> rts = Timeseries(x, t);
 julia> samplingperiod(rts) == 1
 ```
 """
@@ -115,7 +125,7 @@ Returns the duration of the [`AbstractTimeSeries`](@ref) `x`.
 ```@example 1
 julia> t = 1:100;
 julia> x = rand(100);
-julia> ts = TimeSeries(t, x);
+julia> ts = Timeseries(x, t);
 julia> TimeseriesToolsBase.duration(ts) == 99
 ```
 """
@@ -131,7 +141,7 @@ Returns an interval representing the range of the [`AbstractTimeSeries`](@ref) `
 julia> using IntervalSets;
 julia> t = 1:100;
 julia> x = rand(100);
-julia> ts = TimeSeries(t, x);
+julia> ts = Timeseries(x, t);
 julia> IntervalSets.Interval(ts) == (1..100)
 ```
 """
@@ -177,7 +187,7 @@ function interlace(x::AbstractTimeSeries, y::AbstractTimeSeries)
     ts = ts[idxs]
     data = vcat(x.data, y.data)
     data = data[idxs]
-    return TimeSeries(ts, data)
+    return Timeseries(data, ts)
 end
 
 function _buffer(x, n::Integer, p::Integer = 0; discard::Bool = true)
@@ -216,7 +226,7 @@ function buffer(x::RegularTimeSeries, args...; kwargs...)
     t = _buffer(times(x), args...; kwargs...) .|> mean
     # For a regular time series, the buffer centres are regular
     ts = range(first(t), last(t), length(y))
-    y = TimeSeries(ts, y)
+    y = Timeseries(y, ts)
 end
 
 """
@@ -535,7 +545,7 @@ function align(x::DimensionalData.AbstractDimArray, ts,
     dims isa Integer &&
         (dims = DimensionalData.dims(x, dims))
     ints = [Interval((t .+ dt)...) for t in ts]
-    x = TimeSeries(ts, [view(x, rebuild(dims, i)) for i in ints])
+    x = Timeseries([view(x, rebuild(dims, i)) for i in ints], ts)
     if zero
         x = set(x, map(enumerate(x)) do (i, _x)
                     set(_x, dims => lookup(_x, dims) .- ts[i])
@@ -570,7 +580,7 @@ function stitch(x::UnivariateRegular, y::UnivariateRegular)
     dt = samplingperiod(x)
     @assert dt == samplingperiod(y)
     z = vcat(x.data, y.data)
-    z = TimeSeries(dt:dt:(dt * size(z, 1)), z)
+    z = Timeseries(z, dt:dt:(dt * size(z, 1)))
 end
 stitch(x::AbstractArray, y::AbstractArray) = vcat(x, y)
 function stitch(x::MultivariateRegular, y::MultivariateRegular)
@@ -578,7 +588,7 @@ function stitch(x::MultivariateRegular, y::MultivariateRegular)
     @assert dt == samplingperiod(y)
     @assert all(dims(x)[2:end] .== dims(y)[2:end])
     z = vcat(x.data, y.data)
-    z = TimeSeries(dt:dt:(dt * size(z, 1)), dims(x)[2:end]..., z)
+    z = Timeseries(z, dt:dt:(dt * size(z, 1)), dims(x)[2:end]...)
 end
 stitch(X, Y, args...) = reduce(stitch, (X, Y, args...))
 
@@ -651,4 +661,5 @@ function coarsegrain(X::AbstractDimArray; dims = nothing,
     end
 
     return X
+end
 end

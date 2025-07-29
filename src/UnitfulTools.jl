@@ -1,5 +1,15 @@
+module UnitfulTools
+
+using ..TimeSeries
+import ..TimeSeries: convertconst, Timeseries
+using ..ToolsArrays
+using ..Spectra
+
+using IntervalSets
 using Unitful
 import Unitful.unit
+
+using DimensionalData
 
 export dimunit, timeunit, frequnit, unit,
        UnitfulIndex, UnitfulTimeSeries, UnitfulSpectrum,
@@ -7,7 +17,7 @@ export dimunit, timeunit, frequnit, unit,
 
 # Unitful._promote_unit(::S, ::T) where {S<:Unitful.FreeUnits{(), NoDims, nothing}, T<:Unitful.TimeUnits} = u"s"
 """
-    TimeseriesToolsBase.convertconst(c::Number, u::Unitful.Quantity)
+    TimeseriesToolsBase.Uniful.convertconst(c::Number, u::Unitful.Quantity)
 
 Converts a constant `c` to have the same units as `u`.
 
@@ -16,11 +26,11 @@ Converts a constant `c` to have the same units as `u`.
 julia> using Unitful;
 julia> c = 5;
 julia> u = 3u"s";
-julia> converted_c = TimeseriesToolsBase.convertconst(c, u);
+julia> converted_c = TimeseriesToolsBase.Unitful.convertconst(c, u);
 julia> typeof(converted_c) == typeof(u)
 ```
 """
-TimeseriesToolsBase.convertconst(c::Number, u::Unitful.Quantity) = (c)unit(u)
+convertconst(c::Number, u::Unitful.Quantity) = (c)unit(u)
 
 """
     UnitfulIndex
@@ -49,7 +59,7 @@ A type alias for an `AbstractToolsArray` with a [`UnitfulTimeIndex`](@ref).
 julia> using Unitful;
 julia> t = (1:100)u"s";
 julia> x = rand(100);
-julia> uts = TimeSeries(t, x);
+julia> uts = Timeseries(x, t);
 julia> uts isa UnitfulTimeSeries
 ```
 """
@@ -87,24 +97,6 @@ function unitfultimeseries(x::AbstractTimeSeries)
 end
 
 """
-    TimeSeries(t, x, timeunit::Unitful.Units)
-
-Constructs a univariate time series with time `t`, data `x` and time units specified by `timeunit`.
-Note that you can add units to the elements of a time series `x` with, for example, `x*u"V"`.
-
-## Examples
-```@example 1
-julia> using Unitful;
-julia> t = 1:100;
-julia> x = rand(100);
-julia> ts = TimeSeries(t, x, u"ms")*u"V";
-julia> ts isa Union{UnivariateTimeSeries, RegularTimeSeries, UnitfulTimeSeries}
-```
-"""
-TimeSeries(t, x, unit::Unitful.Units) = TimeSeries((t)unit, x)
-TimeSeries(t, v, x, unit::Unitful.Units) = TimeSeries((t)unit, v, x)
-
-"""
     dimunit(x::UnitfulTimeSeries, dim)
 
 Returns the unit associated with the specified dimension `dim` of a [`UnitfulTimeSeries`](@ref).
@@ -114,7 +106,7 @@ Returns the unit associated with the specified dimension `dim` of a [`UnitfulTim
 julia> using Unitful;
 julia> t = 1:100;
 julia> x = rand(100);
-julia> ts = TimeSeries(t, x, u"ms");
+julia> ts = Timeseries(x, (t)u"ms");
 julia> TimeseriesToolsBase.dimunit(ts, 𝑡) == u"ms"
 ```
 """
@@ -130,7 +122,7 @@ Returns the time units associated with a [`UnitfulTimeSeries`].
 julia> using Unitful;
 julia> t = 1:100;
 julia> x = rand(100);
-julia> ts = TimeSeries(t, x, u"ms");
+julia> ts = Timeseries(x, (t)u"ms");
 julia> timeunit(ts) == u"ms"
 ```
 """
@@ -146,7 +138,7 @@ Returns the frequency units associated with a [`UnitfulSpectrum`](@ref).
 julia> using Unitful;
 julia> t = 1:100;
 julia> x = rand(100);
-julia> ts = TimeSeries(t, x, u"ms");
+julia> ts = Timeseries(x, (t)u"ms");
 julia> sp = fft(ts);  # assuming fft returns a UnitfulSpectrum
 julia> frequnits(sp) == u"Hz"
 ```
@@ -163,13 +155,12 @@ Returns the units associated with the elements of an [`UnitfulTimeSeries`](@ref)
 julia> using Unitful;
 julia> t = 1:100;
 julia> x = rand(100);
-julia> ts = TimeSeries(t, x, u"ms")*u"V";
+julia> ts = Timeseries(x, (t)u"ms")*u"V";
 julia> unit(ts) == u"V"
 ```
 """
 unit(x::Union{<:AbstractTimeSeries, AbstractSpectrum}) = x |> eltype |> unit
 unit(x::Union{<:AbstractTimeSeries{Any}, AbstractSpectrum{Any}}) = NoUnits
-
 
 function ustripall(x::AbstractDimArray)
     x = set(x, ustripall.(parent(x)))
@@ -188,3 +179,5 @@ ustripall(a::ClosedInterval) = ustrip(a.left) .. ustrip(a.right)
 ustripall(x::AbstractVector{<:AbstractString}) = x
 ustripall(x::AbstractVector{<:Symbol}) = x
 ustripall(x) = ustrip(x)
+
+end

@@ -3,11 +3,16 @@ using TestItemRunner
 
 @run_package_tests
 
+@testitem "Aqua" begin
+    using Aqua
+    Aqua.test_all(TimeseriesToolsBase, unbound_args = true)
+end
+
 @testitem "Dates" begin
     using Dates, Unitful
     x = 1:100
     t = DateTime(1901):Year(1):DateTime(2000)
-    y = @test_nowarn TimeSeries(t, x)
+    y = @test_nowarn Timeseries(x, t)
     @test y isa RegularTimeSeries
     @test samplingperiod(y) == Year(1)
     @test times(y) == t
@@ -25,26 +30,6 @@ end
     # ........and other funcs
 end
 
-@testitem "Unitful" begin
-    using Unitful
-    ts = (1:1000)u"s"
-    x = @test_nowarn TimeSeries(ts, randn(1000))
-    @test TimeSeries(ustripall(ts), collect(x), u"s") == x
-    @test x isa AbstractTimeSeries
-    @test x isa UnitfulTimeSeries
-    @test x isa RegularTimeSeries
-    @test x isa UnivariateTimeSeries
-
-    @test step(x) == step(ts)
-    @test samplingrate(x) == 1 / step(ts)
-    @test times(x) == ts
-    @test duration(x) == -first(-(extrema(ts)...))
-    @test x[𝑡(1u"s" .. 10u"s")] == x[1:10]
-    @test x[𝑡 = 1:10] == x[1:10]
-
-    @test_nowarn rectify(x; dims = 𝑡)
-end
-
-include("Types.jl")
+include("ToolsArrays.jl")
 include("Utils.jl")
-include("Unitful.jl")
+include("UnitfulTools.jl")

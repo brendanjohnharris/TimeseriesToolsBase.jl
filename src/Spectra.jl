@@ -1,8 +1,15 @@
+module Spectra
+
 using Statistics
 
-export FrequencyDim, Freq, freqs, Spectrum,
-       AbstractSpectrum, RegularSpectrum, UnivariateSpectrum, MultivariateSpectrum,
-       FreqIndex, RegularFreqIndex
+using ..ToolsArrays
+using ..TimeSeries
+import ..ToolsArrays: FrequencyDim
+
+using DimensionalData
+
+export freqs, Spectrum,
+       AbstractSpectrum, RegularSpectrum, UnivariateSpectrum, MultivariateSpectrum
 
 """
     𝑓
@@ -90,3 +97,5 @@ const MultivariateSpectrogram = AbstractSpectrogram{T, 3} where {T}
 
 const RegularSpectrogram = AbstractToolsArray{T, N, <:RegularTimeFreqIndex,
                                               B} where {T, N, B}
+
+end
