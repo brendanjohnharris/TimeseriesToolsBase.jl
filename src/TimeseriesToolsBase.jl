@@ -1,4 +1,4 @@
-module TimeseriesToolsBase
+module TimeseriesBase
 
 using Reexport
 using DimensionalData
@@ -7,21 +7,24 @@ using IntervalSets
 @reexport using IntervalSets
 
 include("ToolsArrays.jl")
-@reexport using TimeseriesToolsBase.ToolsArrays
+@reexport using TimeseriesBase.ToolsArrays
 
 include("TimeSeries.jl")
-@reexport using TimeseriesToolsBase.TimeSeries
+@reexport using TimeseriesBase.TimeSeries
 
 include("Spectra.jl")
-@reexport using TimeseriesToolsBase.Spectra
+@reexport using TimeseriesBase.Spectra
 
 include("UnitfulTools.jl")
-@reexport using TimeseriesToolsBase.UnitfulTools
+@reexport using TimeseriesBase.UnitfulTools
 
 include("Utils.jl")
-@reexport using TimeseriesToolsBase.Utils
+@reexport using TimeseriesBase.Utils
 
 include("DatesTools.jl")
-@reexport using TimeseriesToolsBase.DatesTools
+@reexport using TimeseriesBase.DatesTools
+
+include("Operators.jl")
+@reexport using TimeseriesBase.Operators
 
 end

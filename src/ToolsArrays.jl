@@ -32,12 +32,22 @@ struct ToolsArray{T, N, D <: Tuple, R <: Tuple, A <: AbstractArray{T, N}, Na, Me
     refdims::R
     name::Na
     metadata::Me
+
     function ToolsArray(data::A, dims::D, refdims::R, name::Na,
                         metadata::Me) where {D <: Tuple, R <: Tuple,
                                              A <: AbstractArray{T, N},
                                              Na, Me} where {T, N}
         DimensionalData.checkdims(data, dims)
         new{T, N, D, R, A, Na, Me}(data, dims, refdims, name, metadata)
+    end
+
+    # * If the parent array is a AbstractDimArray, recurse until we hit the root array
+    function ToolsArray(data::A, dims::D, refdims::R, name::Na,
+                        metadata::Me) where {D <: Tuple, R <: Tuple,
+                                             A <: AbstractDimArray{T, N, d, a},
+                                             Na, Me} where {T, N, d, a}
+        DimensionalData.checkdims(parent(data), dims)
+        new{T, N, D, R, a, Na, Me}(parent(data), dims, refdims, name, metadata)
     end
 end
 # 2 arg version
@@ -67,8 +77,19 @@ Apply function `f` across the values of the dimension `dim`
 the given dimension. Optionally provide a name for the result.
 """
 function ToolsArray(f::Function, dim::Dimension;
-                    name = Symbol(nameof(f), "(", name(dim), ")"))
-    ToolsArray(f.(val(dim)), (dim,); name)
+                    name = Symbol(nameof(f), "(", name(dim), ")"), kwargs...)
+    ToolsArray(f.(val(dim)), (dim,); name, kwargs...)
+end
+
+function ToolsArray(f::Function, dims::Tuple{<:Dimension};
+                    name = Symbol(nameof(f), "(", join(name.(dims), ','), ")"), kwargs...)
+    data = map(Iterators.product(val.(dims)...)) do args
+        f(args...)
+    end
+    ToolsArray(data, dims; name, kwargs...)
+end
+function ToolsArray(f::Function, dims::Vararg{<:Dimension}; kwargs...)
+    ToolsArray(data, dims; kwargs...)
 end
 
 ## Extra constructors
@@ -101,7 +122,7 @@ DimensionalData.@dim 𝑓 FrequencyDim "Frequency"
 
 """
     ToolsDim{T}
-An abstract type for custom macro-defined dimensions in `TimeseriesToolsBase`. Analogous to
+An abstract type for custom macro-defined dimensions in `TimeseriesBase`. Analogous to
 `DimensionalData.Dimension` for the purposes of `DimensionalData.@dim`.
 
 ## Examples
@@ -116,7 +137,7 @@ abstract type ToolsDim{T} <: DimensionalData.Dimension{T} end
 
 """
     ToolsDimension
-A union of all `Dimension` types that fall within the scope of `TimeseriesToolsBase`. Analogous
+A union of all `Dimension` types that fall within the scope of `TimeseriesBase`. Analogous
 to `DimensionalData.Dimension` for dispatch purposes.
 
 ## See also

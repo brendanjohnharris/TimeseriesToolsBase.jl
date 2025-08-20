@@ -49,6 +49,22 @@
     da_intervals = set(da, X => Intervals, Y => Intervals)
     db_intervals = set(db, X => Intervals, Y => Intervals)
     @test intervalbounds(da_intervals) == intervalbounds(db_intervals)
+
+    # * Function constructor
+    f = sin
+    y = @test_nowarn ToolsArray(f, 𝑡(1:10))
+    @test lookup(y, 𝑡) == 1:10
+    @test parent(y) == f.(1:10)
+
+    f = +
+    y = @test_nowarn ToolsArray(f, 𝑡(1:10), X(1:10))
+    @test parent(y) == map(Iterators.product(1:10, 1:10)) do args
+        f(args...)
+    end
+
+    # * Bad practice
+    x = ToolsArray(randn(10), (𝑡(1:10),))
+    @test parent(x) isa Vector
 end
 
 @testitem "Printing" begin
@@ -90,7 +106,7 @@ end
     @test_nowarn display(x)
 end
 
-@testitem "TimeseriesToolsBase.jl" begin
+@testitem "TimeseriesBase.jl" begin
     ts = 1:100
     x = @test_nowarn Timeseries(randn(100), ts)
     @test x isa AbstractTimeSeries

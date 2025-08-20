@@ -3,6 +3,6 @@ Pages = ["utils.md"]
 ```
 
 ```@autodocs
-Modules = [TimeseriesToolsBase]
+Modules = [TimeseriesBase]
 Pages   = ["Utils.jl"]
 ```

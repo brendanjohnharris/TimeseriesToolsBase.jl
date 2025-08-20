@@ -126,7 +126,7 @@ Returns the duration of the [`AbstractTimeSeries`](@ref) `x`.
 julia> t = 1:100;
 julia> x = rand(100);
 julia> ts = Timeseries(x, t);
-julia> TimeseriesToolsBase.duration(ts) == 99
+julia> TimeseriesBase.duration(ts) == 99
 ```
 """
 duration(x::AbstractTimeSeries) = (last ∘ times)(x) - (first ∘ times)(x)

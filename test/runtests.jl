@@ -5,7 +5,7 @@ using TestItemRunner
 
 @testitem "Aqua" begin
     using Aqua
-    Aqua.test_all(TimeseriesToolsBase, unbound_args = true)
+    Aqua.test_all(TimeseriesBase, unbound_args = true)
 end
 
 @testitem "Dates" begin
@@ -33,3 +33,4 @@ end
 include("ToolsArrays.jl")
 include("Utils.jl")
 include("UnitfulTools.jl")
+include("Operators.jl")

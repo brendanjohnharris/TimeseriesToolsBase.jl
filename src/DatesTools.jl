@@ -1,6 +1,6 @@
 module DatesTools
 
-using TimeseriesToolsBase.ToolsArrays
+using TimeseriesBase.ToolsArrays
 using DimensionalData
 
 using Dates

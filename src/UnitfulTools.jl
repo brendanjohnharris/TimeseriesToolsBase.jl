@@ -17,7 +17,7 @@ export dimunit, timeunit, frequnit, unit,
 
 # Unitful._promote_unit(::S, ::T) where {S<:Unitful.FreeUnits{(), NoDims, nothing}, T<:Unitful.TimeUnits} = u"s"
 """
-    TimeseriesToolsBase.Uniful.convertconst(c::Number, u::Unitful.Quantity)
+    TimeseriesBase.Uniful.convertconst(c::Number, u::Unitful.Quantity)
 
 Converts a constant `c` to have the same units as `u`.
 
@@ -26,7 +26,7 @@ Converts a constant `c` to have the same units as `u`.
 julia> using Unitful;
 julia> c = 5;
 julia> u = 3u"s";
-julia> converted_c = TimeseriesToolsBase.Unitful.convertconst(c, u);
+julia> converted_c = TimeseriesBase.Unitful.convertconst(c, u);
 julia> typeof(converted_c) == typeof(u)
 ```
 """
@@ -107,7 +107,7 @@ julia> using Unitful;
 julia> t = 1:100;
 julia> x = rand(100);
 julia> ts = Timeseries(x, (t)u"ms");
-julia> TimeseriesToolsBase.dimunit(ts, 𝑡) == u"ms"
+julia> TimeseriesBase.dimunit(ts, 𝑡) == u"ms"
 ```
 """
 dimunit(x::AbstractToolsArray, dim) = dims(x, dim) |> eltype |> unit

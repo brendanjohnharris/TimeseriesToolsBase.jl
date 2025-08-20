@@ -159,15 +159,16 @@ Constructs a univariate time series with time `t` and data `x`.
 
 ## Examples
 ```@example 1
-julia> using TimeseriesToolsBase, Unitful;
+julia> using TimeseriesBase, Unitful;
 julia> t = 1:100
 julia> x = rand(100)
 julia> ts = Timeseries(x, t)
 julia> ts isa typeintersect(UnivariateTimeSeries, RegularTimeSeries)
 ```
 """
-Timeseries(x, t; kwargs...) = ToolsArray(parent(x), (𝑡(t),); kwargs...)
-Timeseries(x, t::TimeDim; kwargs...) = ToolsArray(parent(x), (t,); kwargs...)
+function Timeseries(x, t, dims::Vararg{<:Dimension}; kwargs...)
+    ToolsArray(x, (𝑡(t), dims...); kwargs...)
+end
 
 """
     TimeSeries(x, t, v)
@@ -183,14 +184,11 @@ julia> mts = Timeseries(x, t, v)
 julia> mts isa typeintersect(MultivariateTimeSeries, RegularTimeSeries)
 ```
 """
-Timeseries(x, t, v; kwargs...) = ToolsArray(x, (𝑡(t), Var(v)); kwargs...)
+function Timeseries(x, t, v, dims::Vararg{<:Dimension}; kwargs...)
+    ToolsArray(x, (𝑡(t), Var(v), dims...); kwargs...)
+end
 
-function Timeseries(x, t::TimeDim, dims::Vararg{<:Dimension}; kwargs...)
-    ToolsArray(parent(x), (t, dims...); kwargs...)
-end
-function Timeseries(x, t, dims::Vararg{<:Dimension}; kwargs...)
-    ToolsArray(parent(x), (𝑡(t), dims...); kwargs...)
-end
+Timeseries(x, dims::Vararg{<:Dimension}; kwargs...) = ToolsArray(x, dims; kwargs...)
 
 convertconst(a, _) = a
 

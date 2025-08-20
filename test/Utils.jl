@@ -48,7 +48,7 @@ end
 end
 
 @testitem "Rectification" begin
-    import TimeseriesToolsBase: rectifytime
+    import TimeseriesBase: rectifytime
     ts = 0.1:0.1:1000
     x = ToolsArray(sin, 𝑡(ts .+ randn(length(ts)) .* 1e-10))
     @test issorted(times(x))
@@ -101,7 +101,7 @@ end
 end
 
 @testitem "Left and right derivatives" begin
-    import TimeseriesToolsBase: leftdiff, rightdiff
+    import TimeseriesBase: leftdiff, rightdiff
     sig(n) = Timeseries(cumsum(randn(n)), range(0.01, 0.01, length = n))
     x = sig(1000)
     X = cat((sig(1000) for _ in 1:10)...; dims = Var(1:10))
