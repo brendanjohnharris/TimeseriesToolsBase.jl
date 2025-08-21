@@ -14,16 +14,16 @@ export AbstractToolsArray, ToolsArray,
 
 include("TimeSeries.jl")
 using TimeseriesBase.TimeSeries
-export AbstractTimeseries, AbstractTS,
-       UnivariateTimeseries, UnivariateTS,
-       MultivariateTimeseries, MultivariateTS,
-       RegularTimeseries, RegularTS,
+export AbstractTimeseries,
+       UnivariateTimeseries,
+       MultivariateTimeseries,
+       RegularTimeseries,
        UnivariateRegular, MultivariateRegular,
-       IrregularTimeseries, IrregularTS,
+       IrregularTimeseries,
        TimeIndex, RegularIndex, RegularTimeIndex,
        IrregularIndex, IrregularTimeIndex,
        Timeseries, Timeseries,
-       MultidimensionalIndex, MultidimensionalTimeseries, MultidimensionalTS,
+       MultidimensionalIndex, MultidimensionalTimeseries,
        SpikeTrain, MultivariateSpikeTrain, UnivariateSpikeTrain,
        spiketrain, spiketimes
 
