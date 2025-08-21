@@ -58,7 +58,7 @@ end
 
     y = ToolsArray(cos, 𝑡(ts .+ randn(length(ts)) .* 1e-10))
     @test issorted(times(y))
-    _x, _y = (rectifytime([x, y])...,)
+    _x, _y = rectifytime(x, y)
 
     @test all(x .== parent(_x))
     @test ts == times(_x)

@@ -69,7 +69,7 @@ julia> ts = Timeseries(x, t);
 julia> times(ts) == t
 ```
 """
-times(x::AbstractTimeSeries) = lookup(x, 𝑡) |> parent
+times(x::AbstractTimeSeries) = dims(x, 𝑡) |> val
 
 """
     step(x::RegularTimeSeries)
@@ -273,7 +273,6 @@ function rectify(ts::DimensionalData.Dimension; tol = 4, zero = false, extend = 
     end
     return ts, origts
 end
-rectifytime(ts::𝑡; kwargs...) = rectify(ts; kwargs...)
 
 function rectify(X::AbstractDimArray; dims, tol = 4, zero = false, kwargs...) # tol gives significant figures for rounding
     if !(dims isa Tuple || dims isa AbstractVector)
@@ -292,8 +291,80 @@ function rectify(X::AbstractDimArray; dims, tol = 4, zero = false, kwargs...) # 
     return X
 end
 
+function rectify(X::Vararg{<:AbstractDimArray}; dims = 𝑡, tol = 4, zero = false,
+                 kwargs...)
+
+    # Ensure dims is iterable
+    if !(dims isa Tuple || dims isa AbstractVector)
+        dims = [dims]
+    end
+
+    # Process each dimension
+    for dim in dims
+        # Extract dimension values from all arrays
+        all_dims = [DimensionalData.dims(x, dim) for x in X]
+
+        # Find common range across all arrays
+        mint = maximum([minimum(d) for d in all_dims])
+        maxt = minimum([maximum(d) for d in all_dims])
+
+        # Check if there's overlap
+        if mint > maxt
+            @error "No overlapping range found for dimension $dim"
+            return X
+        end
+
+        # Subset all arrays to common range (with small tolerance for floating point)
+        u = unit(eltype(all_dims[1]))
+        tol_val = u == NoUnits ? exp10(-tol) : exp10(-tol) * u
+        common_range = (mint - tol_val) .. (maxt + tol_val)
+        X = [x[dim(common_range)] for x in X]
+
+        # Find minimum common length
+        min_length = minimum([size(x, dim) for x in X])
+        X = [selectdim(x, dimnum(x, dim), 1:min_length) for x in X]
+
+        # Compute mean dimension values for rectification
+        mean_dim_vals = mean([collect(DimensionalData.dims(x, dim)) for x in X])
+
+        # Rectify using the mean dimension values
+        ts, origts = rectify(rebuild(DimensionalData.dims(X[1], dim), mean_dim_vals);
+                             tol = tol, zero = zero, extend = true, kwargs...)
+
+        # Trim to actual size
+        ts = ts[1:min_length]
+
+        # Verify rectification is within tolerance
+        for (i, x) in enumerate(X)
+            x_dims = collect(DimensionalData.dims(x, dim))
+            max_diff = maximum(abs.(ts .- x_dims))
+            # Base tolerance on rectification precision, not step variability
+            u = unit(eltype(x_dims))
+            expected_tol = u == NoUnits ? exp10(-tol) : exp10(-tol) * u
+
+            if max_diff > expected_tol
+                @warn "Array $i: dimension $dim differs from rectified values by up to $max_diff (tolerance: $expected_tol)"
+            end
+        end
+
+        # Apply rectified dimension to all arrays
+        X = [set(x, dim => ts) for x in X]
+
+        # Add original dimension values to metadata if zero=true
+        if zero
+            X = [rebuild(x;
+                         metadata = (Symbol(dim) => origts[1:min_length],
+                                     pairs(metadata(x))...)) for x in X]
+        end
+    end
+
+    return X
+end
+
+rectifytime(ts::𝑡; kwargs...) = rectify(ts; kwargs...)
+
 """
-    rectifytime(X::IrregularTimeSeries; tol = 6, zero = false)
+    rectifytime(X::AbstractTimeSeries; tol = 6, zero = false)
 
 Rectifies the time values of an [`IrregularTimeSeries`](@ref). Checks if the time step of
 the input time series is approximately constant. If it is, the function rounds the time step
@@ -306,7 +377,7 @@ not approximately constant, a warning is issued and the rectification is skipped
 - `zero::Bool`: If `true`, the rectified time values will start from zero. Default is
   `false`.
 """
-rectifytime(X::IrregularTimeSeries; kwargs...) = rectify(X; dims = 𝑡, kwargs...)
+rectifytime(X::Vararg{<:AbstractTimeSeries}; kwargs...) = rectify(X...; dims = 𝑡, kwargs...)
 
 function matchdim(X::AbstractVector{<:AbstractDimArray}; dims = 1, tol = 4, zero = false,
                   kwargs...)
