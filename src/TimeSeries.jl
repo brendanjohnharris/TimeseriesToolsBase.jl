@@ -75,8 +75,8 @@ const RegularTimeIndex = Tuple{A,
 
 A type alias for a regularly sampled time series.
 """
-const RegularTimeseries = RegularTS = AbstractToolsArray{T, N, <:RegularTimeIndex,
-                                                         B} where {T, N, B}
+const RegularTimeseries = AbstractToolsArray{T, N, <:RegularTimeIndex,
+                                             B} where {T, N, B}
 
 const MultidimensionalIndex = Tuple{A,
                                     Vararg{Dimension{B}}} where {
@@ -118,8 +118,8 @@ const IrregularTimeIndex = Tuple{A,
 
 A type alias for a potentially irregularly sampled time series.
 """
-const IrregularTimeseries = IrregularTS = AbstractToolsArray{T, N, <:IrregularTimeIndex,
-                                                             B} where {T, N, B}
+const IrregularTimeseries = AbstractToolsArray{T, N, <:IrregularTimeIndex,
+                                               B} where {T, N, B}
 
 """
     BinaryTimeseries
