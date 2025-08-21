@@ -291,7 +291,7 @@ function rectify(X::AbstractDimArray; dims, tol = 4, zero = false, kwargs...) # 
     return X
 end
 
-function rectify(X::Vararg{<:AbstractDimArray}; dims = 𝑡, tol = 4, zero = false,
+function rectify(X::Vararg{AbstractDimArray}; dims = 𝑡, tol = 4, zero = false,
                  kwargs...)
 
     # Ensure dims is iterable
@@ -377,7 +377,7 @@ not approximately constant, a warning is issued and the rectification is skipped
 - `zero::Bool`: If `true`, the rectified time values will start from zero. Default is
   `false`.
 """
-rectifytime(X::Vararg{<:AbstractTimeSeries}; kwargs...) = rectify(X...; dims = 𝑡, kwargs...)
+rectifytime(X::Vararg{AbstractTimeSeries}; kwargs...) = rectify(X...; dims = 𝑡, kwargs...)
 
 function matchdim(X::AbstractVector{<:AbstractDimArray}; dims = 1, tol = 4, zero = false,
                   kwargs...)
