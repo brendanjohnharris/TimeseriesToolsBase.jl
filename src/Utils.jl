@@ -147,40 +147,6 @@ julia> IntervalSets.Interval(ts) == (1..100)
 """
 IntervalSets.Interval(x::AbstractTimeSeries) = (first ∘ times)(x) .. (last ∘ times)(x)
 
-function describedim(d::DimensionalData.Dimension)
-    if d isa DimensionalData.TimeDim
-        n = "Time"
-    elseif d isa FrequencyDim
-        n = "Frequency"
-    elseif d isa VariableDim
-        n = "Variable"
-    else
-        n = name(d)
-    end
-    units = d |> eltype |> unit
-    isnothing(units) && (n = n * " ($units)")
-    n
-end
-
-function describedim(x::Tuple)
-    @assert eltype(x) <: DimensionalData.Dimension # Move this into function args
-    ns = describedim.(x)
-    return ns
-end
-describedim(x::AbstractDimArray, i) = dims(x, i) |> describedim
-describedim(x::AbstractDimArray) = x |> dims |> describedim
-describedims = describedim
-
-function describename(x::AbstractDimArray)
-    n = name(x)
-    n isa DimensionalData.NoName && (n = "")
-    if ~isnothing(n)
-        units = x |> eltype |> unit
-        isnothing(units) && (n = n * " ($units)")
-    end
-    n
-end
-
 function interlace(x::AbstractTimeSeries, y::AbstractTimeSeries)
     ts = vcat(times(x), times(y))
     idxs = sortperm(ts)
@@ -341,23 +307,6 @@ not approximately constant, a warning is issued and the rectification is skipped
   `false`.
 """
 rectifytime(X::IrregularTimeSeries; kwargs...) = rectify(X; dims = 𝑡, kwargs...)
-
-function rectifytime(X::AbstractVector; tol = 6, zero = false) # ! Legacy
-    # Generate some common time indices as close as possible to the rectified times of each element of the input vector
-    ts = times.(X)
-    mint = maximum(minimum.(ts)) - exp10(-tol) .. minimum(maximum.(ts)) + exp10(-tol)
-    X = [x[𝑡(mint)] for x in X]
-    X = [x[1:minimum(size.(X, 1))] for x in X]
-    ts = mean(times.(X))
-    ts, origts = rectifytime(𝑡(ts); tol, zero)
-    ts = ts[1:size(X[1], 𝑡)] # Should be ok?
-    if any([any(ts .- times(x) .> std(ts) / 10.0^(-tol)) for x in X])
-        @error "Cannot find common times within tolerance"
-    end
-
-    X = [set(x, 𝑡 => ts) for x in X]
-    return X
-end
 
 function matchdim(X::AbstractVector{<:AbstractDimArray}; dims = 1, tol = 4, zero = false,
                   kwargs...)
@@ -567,7 +516,7 @@ end
 """
     stitch(x, args...)
 
-Stitch multiple time series together by concatenatign along the time dimension generating new contiguous time indices. The time series must be of the same type (`UnivariateRegular`, `MultivariateRegular`, or `AbstractArray`), and the sampling period and dimensions of the data arrays must match. If the arguments are `MultivariateRegular, they must have the same dimensions (except for the time dimension).
+Stitch multiple time series together by concatenating along the time dimension generating new contiguous time indices. The time series must be of the same type (`UnivariateRegular`, `MultivariateRegular`, or `AbstractArray`), and the sampling period and dimensions of the data arrays must match. If the arguments are `MultivariateRegular, they must have the same dimensions (except for the time dimension).
 
 # Arguments
 - `X`: The first time series.

@@ -90,8 +90,8 @@ const RegularTimeFreqIndex = Tuple{T, F,
                                                              F <: 𝑓}
 
 const AbstractSpectrogram = AbstractToolsArray{T, N, <:TimeFreqIndex, B} where {T, N, B}
-times(x::AbstractSpectrogram) = dims(x, 𝑡).val.data
-freqs(x::AbstractSpectrogram) = dims(x, 𝑓).val.data
+times(x::AbstractSpectrogram) = lookup(x, 𝑡) |> parent
+freqs(x::AbstractSpectrogram) = lookup(x, 𝑓) |> parent
 
 const MultivariateSpectrogram = AbstractSpectrogram{T, 3} where {T}
 

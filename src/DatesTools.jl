@@ -3,7 +3,7 @@ module DatesTools
 using TimeseriesBase.ToolsArrays
 using DimensionalData
 
-using Dates
+import DimensionalData.Dates
 
 export DateIndex, DateTimeIndex, DateTimeSeries
 
