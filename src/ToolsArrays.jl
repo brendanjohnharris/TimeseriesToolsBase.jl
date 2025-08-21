@@ -56,6 +56,9 @@ function ToolsArray(data::AbstractArray, dims::Union{Tuple, NamedTuple};
                     refdims = (), name = NoName(), metadata = NoMetadata())
     ToolsArray(data, format(dims, data), refdims, name, metadata)
 end
+function ToolsArray(data::AbstractArray, dims::Vararg{Dimension}; kwargs...)
+    ToolsArray(data, dims; kwargs...)
+end
 # All keyword argument version
 function ToolsArray(; data, dims, refdims = (), name = NoName(), metadata = NoMetadata())
     ToolsArray(data, dims; refdims, name, metadata)
