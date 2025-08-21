@@ -14,16 +14,16 @@ export AbstractToolsArray, ToolsArray,
 
 include("TimeSeries.jl")
 using TimeseriesBase.TimeSeries
-export AbstractTimeSeries, AbstractTS,
-       UnivariateTimeSeries, UnivariateTS,
-       MultivariateTimeSeries, MultivariateTS,
-       RegularTimeSeries, RegularTS,
+export AbstractTimeseries, AbstractTS,
+       UnivariateTimeseries, UnivariateTS,
+       MultivariateTimeseries, MultivariateTS,
+       RegularTimeseries, RegularTS,
        UnivariateRegular, MultivariateRegular,
-       IrregularTimeSeries, IrregularTS,
+       IrregularTimeseries, IrregularTS,
        TimeIndex, RegularIndex, RegularTimeIndex,
        IrregularIndex, IrregularTimeIndex,
-       TimeSeries, Timeseries,
-       MultidimensionalIndex, MultidimensionalTimeSeries, MultidimensionalTS,
+       Timeseries, Timeseries,
+       MultidimensionalIndex, MultidimensionalTimeseries, MultidimensionalTS,
        SpikeTrain, MultivariateSpikeTrain, UnivariateSpikeTrain,
        spiketrain, spiketimes
 
@@ -35,7 +35,7 @@ export freqs, Spectrum, AbstractSpectrum, RegularSpectrum, UnivariateSpectrum,
 include("UnitfulTools.jl")
 using TimeseriesBase.UnitfulTools
 export dimunit, timeunit, frequnit, unit,
-       UnitfulIndex, UnitfulTimeSeries, UnitfulSpectrum,
+       UnitfulIndex, UnitfulTimeseries, UnitfulSpectrum,
        ustripall
 
 include("Utils.jl")
@@ -51,7 +51,7 @@ export times, step, samplingrate, samplingperiod, duration, coarsegrain,
 
 include("DatesTools.jl")
 using TimeseriesBase.DatesTools
-export DateIndex, DateTimeIndex, DateTimeSeries
+export DateIndex, DateTimeIndex, DateTimeseries
 
 include("Operators.jl")
 using TimeseriesBase.Operators

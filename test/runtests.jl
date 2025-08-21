@@ -13,7 +13,7 @@ end
     x = 1:100
     t = DateTime(1901):Year(1):DateTime(2000)
     y = @test_nowarn Timeseries(x, t)
-    @test y isa RegularTimeSeries
+    @test y isa RegularTimeseries
     @test samplingperiod(y) == Year(1)
     @test times(y) == t
     @test duration(y) == last(t) - first(t)

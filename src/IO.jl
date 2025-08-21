@@ -14,14 +14,14 @@ savetimeseries(f::String, x) = savetimeseries(f |> query, x)
 loadtimeseries(f::String) = loadtimeseries(f |> query)
 
 ## JLD2 files are easiest
-function savetimeseries(f::File{format"JLD2"}, x::AbstractTimeSeries)
+function savetimeseries(f::File{format"JLD2"}, x::AbstractTimeseries)
     save(f, Dict("timeseries" => x))
 end
 loadtimeseries(f::File{format"JLD2"}) = load(f, "timeseries")
 
 ## Text files are harder. We can't fully reconstruct a generic timeseries, so need to make some concessions.
 # We'll assume that the first column is the time index, and the remaining columns are the data.
-function savetimeseries(f::File{format"TSV"}, x::AbstractTimeSeries, var)
+function savetimeseries(f::File{format"TSV"}, x::AbstractTimeseries, var)
     isnothing(var) && (var = "")
     open(f.filename, "w") do f
         print(f, "# ")
@@ -72,7 +72,7 @@ function savetimeseries(f::File{format"TSV"}, x::AbstractTimeSeries, var)
         writedlm(f, [times(x) x.data], '\t')
     end
 end
-function savetimeseries(f::File{format"TSV"}, x::UnivariateTimeSeries)
+function savetimeseries(f::File{format"TSV"}, x::UnivariateTimeseries)
     if length(refdims(x)) == 1
         var = refdims(x)
     else
@@ -80,11 +80,11 @@ function savetimeseries(f::File{format"TSV"}, x::UnivariateTimeSeries)
     end
     savetimeseries(f, x, var)
 end
-function savetimeseries(f::File{format"TSV"}, x::MultivariateTimeSeries)
+function savetimeseries(f::File{format"TSV"}, x::MultivariateTimeseries)
     savetimeseries(f, x, dims(x, 2))
 end
 
-function savetimeseries(f::File{format"TSV"}, x::MultidimensionalTimeSeries)
+function savetimeseries(f::File{format"TSV"}, x::MultidimensionalTimeseries)
     # For multidimensional time series, we have to flatten to a table to save in csv format
     if ndims(x) < 3
         savetimeseries(f, x, dims(x, 2))

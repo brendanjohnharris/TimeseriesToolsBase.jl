@@ -5,7 +5,7 @@ using DimensionalData
 
 import DimensionalData.Dates
 
-export DateIndex, DateTimeIndex, DateTimeSeries
+export DateIndex, DateTimeIndex, DateTimeseries
 
 DateIndex = DateTIndex = Union{AbstractArray{<:Dates.AbstractTime},
                                AbstractRange{<:Dates.AbstractTime},
@@ -15,7 +15,7 @@ DateTimeIndex = Tuple{A,
                       Vararg{DimensionalData.Dimension}} where {A <:
                                                                 DimensionalData.Dimension{<:DateIndex}}
 
-DateTimeSeries = AbstractToolsArray{T, N, <:DateTimeIndex, B} where {T, N, B}
+DateTimeseries = AbstractToolsArray{T, N, <:DateTimeIndex, B} where {T, N, B}
 
-unit(::DateTimeSeries) = NoUnits
+unit(::DateTimeseries) = NoUnits
 end

@@ -2,9 +2,9 @@ module Utils
 
 using IntervalSets
 using DimensionalData
-using ..ToolsArrays
-using ..TimeSeries
-using ..UnitfulTools
+using TimeseriesBase.ToolsArrays
+using TimeseriesBase.TimeSeries
+using TimeseriesBase.UnitfulTools
 
 import DimensionalData.Dimensions.LookupArrays: At, Near
 import DimensionalData.Dimensions.Dimension
@@ -23,7 +23,7 @@ export times, step, samplingrate, samplingperiod, duration, coarsegrain,
        addrefdim, addmetadata, align
 
 # import LinearAlgebra.mul!
-# function mul!(a::AbstractVector, b::AbstractTimeSeries, args...; kwargs...)
+# function mul!(a::AbstractVector, b::AbstractTimeseries, args...; kwargs...)
 #     mul!(a, b.data, args...; kwargs...)
 # end
 
@@ -57,9 +57,9 @@ function print_array(io::IO, mime,
 end
 
 """
-    times(x::AbstractTimeSeries)
+    times(x::AbstractTimeseries)
 
-Returns the time indices of the [`AbstractTimeSeries`](@ref) `x`.
+Returns the time indices of the [`AbstractTimeseries`](@ref) `x`.
 
 ## Examples
 ```@example 1
@@ -69,12 +69,12 @@ julia> ts = Timeseries(x, t);
 julia> times(ts) == t
 ```
 """
-times(x::AbstractTimeSeries) = dims(x, 𝑡) |> val
+times(x::AbstractTimeseries) = lookup(x, 𝑡) |> val
 
 """
-    step(x::RegularTimeSeries)
+    step(x::RegularTimeseries)
 
-Returns the step size (time increment) of a regularly sampled [`RegularTimeSeries`](@ref).
+Returns the step size (time increment) of a regularly sampled [`RegularTimeseries`](@ref).
 
 ## Examples
 ```@example 1
@@ -84,12 +84,12 @@ julia> rts = Timeseries(x, t);
 julia> step(rts) == 1
 ```
 """
-Base.step(x::RegularTimeSeries; dims = 𝑡) = lookup(x, dims) |> step
+Base.step(x::RegularTimeseries; dims = 𝑡) = lookup(x, dims) |> step
 
 """
-    samplingrate(x::RegularTimeSeries)
+    samplingrate(x::RegularTimeseries)
 
-Returns the sampling rate (inverse of the step size) of a regularly sampled [`RegularTimeSeries`](@ref).
+Returns the sampling rate (inverse of the step size) of a regularly sampled [`RegularTimeseries`](@ref).
 
 ## Examples
 ```@example 1
@@ -99,12 +99,12 @@ julia> rts = Timeseries(x, t);
 julia> samplingrate(rts) == 1
 ```
 """
-samplingrate(x::RegularTimeSeries; kwargs...) = 1 / step(x; kwargs...)
+samplingrate(x::RegularTimeseries; kwargs...) = 1 / step(x; kwargs...)
 
 """
-    samplingperiod(x::RegularTimeSeries)
+    samplingperiod(x::RegularTimeseries)
 
-Returns the sampling period (step size) of a regularly sampled [`RegularTimeSeries`](@ref).
+Returns the sampling period (step size) of a regularly sampled [`RegularTimeseries`](@ref).
 
 ## Examples
 ```@example 1
@@ -114,12 +114,12 @@ julia> rts = Timeseries(x, t);
 julia> samplingperiod(rts) == 1
 ```
 """
-samplingperiod(x::RegularTimeSeries; kwargs...) = step(x; kwargs...)
+samplingperiod(x::RegularTimeseries; kwargs...) = step(x; kwargs...)
 
 """
-    duration(x::AbstractTimeSeries)
+    duration(x::AbstractTimeseries)
 
-Returns the duration of the [`AbstractTimeSeries`](@ref) `x`.
+Returns the duration of the [`AbstractTimeseries`](@ref) `x`.
 
 ## Examples
 ```@example 1
@@ -129,12 +129,12 @@ julia> ts = Timeseries(x, t);
 julia> TimeseriesBase.duration(ts) == 99
 ```
 """
-duration(x::AbstractTimeSeries) = (last ∘ times)(x) - (first ∘ times)(x)
+duration(x::AbstractTimeseries) = (last ∘ times)(x) - (first ∘ times)(x)
 
 """
-    IntervalSets.Interval(x::AbstractTimeSeries)
+    IntervalSets.Interval(x::AbstractTimeseries)
 
-Returns an interval representing the range of the [`AbstractTimeSeries`](@ref) `x`.
+Returns an interval representing the range of the [`AbstractTimeseries`](@ref) `x`.
 
 ## Examples
 ```@example 1
@@ -145,9 +145,9 @@ julia> ts = Timeseries(x, t);
 julia> IntervalSets.Interval(ts) == (1..100)
 ```
 """
-IntervalSets.Interval(x::AbstractTimeSeries) = (first ∘ times)(x) .. (last ∘ times)(x)
+IntervalSets.Interval(x::AbstractTimeseries) = (first ∘ times)(x) .. (last ∘ times)(x)
 
-function interlace(x::AbstractTimeSeries, y::AbstractTimeSeries)
+function interlace(x::AbstractTimeseries, y::AbstractTimeseries)
     ts = vcat(times(x), times(y))
     idxs = sortperm(ts)
     ts = ts[idxs]
@@ -173,7 +173,7 @@ end
 buffer(x::AbstractVector, args...; kwargs...) = _buffer(x, args...; kwargs...)
 
 """
-    buffer(x::RegularTimeSeries, n::Integer, p::Integer; kwargs...)
+    buffer(x::RegularTimeseries, n::Integer, p::Integer; kwargs...)
 
 Buffer a time series `x` with a given window length and overlap between successive buffers.
 
@@ -187,7 +187,7 @@ Buffer a time series `x` with a given window length and overlap between successi
 
 See also: [`window`](@ref), [`delayembed`](@ref), [`coarsegrain`](@ref)
 """
-function buffer(x::RegularTimeSeries, args...; kwargs...)
+function buffer(x::RegularTimeseries, args...; kwargs...)
     y = _buffer(x, args...; kwargs...)
     t = _buffer(times(x), args...; kwargs...) .|> mean
     # For a regular time series, the buffer centres are regular
@@ -196,7 +196,7 @@ function buffer(x::RegularTimeSeries, args...; kwargs...)
 end
 
 """
-    window(x::RegularTimeSeries, n::Integer, p::Integer; kwargs...)
+    window(x::RegularTimeseries, n::Integer, p::Integer; kwargs...)
 
 Window a time series `x` with a given window length and step between successive windows.
 
@@ -364,20 +364,20 @@ end
 rectifytime(ts::𝑡; kwargs...) = rectify(ts; kwargs...)
 
 """
-    rectifytime(X::AbstractTimeSeries; tol = 6, zero = false)
+    rectifytime(X::AbstractTimeseries; tol = 6, zero = false)
 
-Rectifies the time values of an [`IrregularTimeSeries`](@ref). Checks if the time step of
+Rectifies the time values of an [`IrregularTimeseries`](@ref). Checks if the time step of
 the input time series is approximately constant. If it is, the function rounds the time step
-and constructs a [`RegularTimeSeries`](@ref) with range time indices. If the time step is
+and constructs a [`RegularTimeseries`](@ref) with range time indices. If the time step is
 not approximately constant, a warning is issued and the rectification is skipped.
 
 # Arguments
-- `X::IrregularTimeSeries`: The input time series.
+- `X::IrregularTimeseries`: The input time series.
 - `tol::Int`: The number of significant figures for rounding the time step. Default is 6.
 - `zero::Bool`: If `true`, the rectified time values will start from zero. Default is
   `false`.
 """
-rectifytime(X::Vararg{AbstractTimeSeries}; kwargs...) = rectify(X...; dims = 𝑡, kwargs...)
+rectifytime(X::Vararg{AbstractTimeseries}; kwargs...) = rectify(X...; dims = 𝑡, kwargs...)
 
 function matchdim(X::AbstractVector{<:AbstractDimArray}; dims = 1, tol = 4, zero = false,
                   kwargs...)
@@ -433,7 +433,7 @@ function _diff!(x::AbstractDimArray, f!; dims = 1, kwargs...)
 end
 
 """
-    centraldiff!(x::RegularTimeSeries; dims=𝑡, grad=-)
+    centraldiff!(x::RegularTimeseries; dims=𝑡, grad=-)
 
 Compute the central difference of a regular time series `x`, in-place.
 The first and last elements are set to the forward and backward difference, respectively.
@@ -441,13 +441,13 @@ The dimension to perform differencing over can be specified as `dims`, and the d
 """
 centraldiff!(args...; kwargs...) = _diff!(args..., _centraldiff!; kwargs...)
 
-function _diff(x::RegularTimeSeries, f!; kwargs...)
+function _diff(x::RegularTimeseries, f!; kwargs...)
     y = deepcopy(x)
     f!(y; kwargs...)
     return y
 end
 """
-    centraldiff(x::RegularTimeSeries; dims=𝑡, grad=-)
+    centraldiff(x::RegularTimeseries; dims=𝑡, grad=-)
 
 Compute the central difference of a regular time series `x`.
 The first and last elements are set to the forward and backward difference, respectively.
@@ -462,7 +462,7 @@ function checkderivdims(dims)
     end
 end
 
-function _deriv!(x::RegularTimeSeries, f!; dims = 𝑡, kwargs...)
+function _deriv!(x::RegularTimeseries, f!; dims = 𝑡, kwargs...)
     checkderivdims(dims)
     f!(x; dims, kwargs...)
     x ./= step(x; dims)
@@ -470,14 +470,14 @@ function _deriv!(x::RegularTimeSeries, f!; dims = 𝑡, kwargs...)
 end
 
 """
-    centralderiv!(x::RegularTimeSeries; kwargs...)
+    centralderiv!(x::RegularTimeseries; kwargs...)
 
 Compute the central derivative of a regular time series `x`, in-place.
 See [`centraldiff!`](@ref) for available keyword arguments.
 """
 centralderiv!(args...; kwargs...) = _deriv!(args..., centraldiff!; kwargs...)
 
-function _deriv(x::RegularTimeSeries, f!; dims = 𝑡, kwargs...)
+function _deriv(x::RegularTimeseries, f!; dims = 𝑡, kwargs...)
     y = deepcopy(x)
     if unit(step(x; dims)) == NoUnits # Can safely mutate
         f!(y; dims, kwargs...)
@@ -490,7 +490,7 @@ function _deriv(x::RegularTimeSeries, f!; dims = 𝑡, kwargs...)
     return y
 end
 """
-    centralderiv(x::AbstractTimeSeries)
+    centralderiv(x::AbstractTimeseries)
 
 Compute the central derivative of a time series `x`.
 See [`centraldiff`](@ref) for available keyword arguments.
@@ -520,8 +520,8 @@ leftdiff(args...; kwargs...) = _diff(args..., leftdiff!; kwargs...)
 leftderiv!(args...; kwargs...) = _deriv!(args..., leftdiff!; kwargs...)
 leftderiv(args...; kwargs...) = _deriv(args..., leftderiv!; kwargs...)
 
-Base.abs(x::AbstractTimeSeries) = Base.abs.(x)
-Base.angle(x::AbstractTimeSeries) = Base.angle.(x)
+Base.abs(x::AbstractTimeseries) = Base.abs.(x)
+Base.angle(x::AbstractTimeseries) = Base.angle.(x)
 
 # * See https://en.wikipedia.org/wiki/Directional_statistics
 resultant(θ; kwargs...) = mean(exp.(im .* θ); kwargs...)

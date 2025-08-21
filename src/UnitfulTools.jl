@@ -1,9 +1,9 @@
 module UnitfulTools
 
-using ..TimeSeries
-import ..TimeSeries: convertconst, Timeseries
-using ..ToolsArrays
-using ..Spectra
+using TimeseriesBase.TimeSeries
+import TimeseriesBase.TimeSeries: convertconst, Timeseries
+using TimeseriesBase.ToolsArrays
+using TimeseriesBase.Spectra
 
 using IntervalSets
 using Unitful
@@ -12,7 +12,7 @@ import Unitful.unit
 using DimensionalData
 
 export dimunit, timeunit, frequnit, unit,
-       UnitfulIndex, UnitfulTimeSeries, UnitfulSpectrum,
+       UnitfulIndex, UnitfulTimeseries, UnitfulSpectrum,
        ustripall
 
 # Unitful._promote_unit(::S, ::T) where {S<:Unitful.FreeUnits{(), NoDims, nothing}, T<:Unitful.TimeUnits} = u"s"
@@ -50,7 +50,7 @@ UnitfulTimeIndex = Tuple{A,
                                                                    DimensionalData.Dimension{<:UnitfulIndex}}
 
 """
-    UnitfulTimeSeries{T, N, B}
+    UnitfulTimeseries{T, N, B}
 
 A type alias for an `AbstractToolsArray` with a [`UnitfulTimeIndex`](@ref).
 
@@ -60,10 +60,10 @@ julia> using Unitful;
 julia> t = (1:100)u"s";
 julia> x = rand(100);
 julia> uts = Timeseries(x, t);
-julia> uts isa UnitfulTimeSeries
+julia> uts isa UnitfulTimeseries
 ```
 """
-UnitfulTimeSeries = AbstractToolsArray{T, N, <:UnitfulTimeIndex, B} where {T, N, B}
+UnitfulTimeseries = AbstractToolsArray{T, N, <:UnitfulTimeIndex, B} where {T, N, B}
 
 UnitfulFIndex = Union{AbstractArray{<:Unitful.Frequency},
                       AbstractRange{<:Unitful.Frequency}, Tuple{<:Unitful.Frequency}}
@@ -78,7 +78,7 @@ A type representing spectra with unitful frequency units.
 """
 UnitfulSpectrum = AbstractToolsArray{T, N, <:UnitfulFreqIndex, B} where {T, N, B}
 
-function unitfultimeseries(x::AbstractTimeSeries, u::Unitful.Units)
+function unitfultimeseries(x::AbstractTimeseries, u::Unitful.Units)
     t = x |> times
     t = timeunit(x) == NoUnits ? t : ustrip(t)
     t = t * u
@@ -87,7 +87,7 @@ function unitfultimeseries(x::AbstractTimeSeries, u::Unitful.Units)
                       name = DimensionalData.name(x), refdims = DimensionalData.refdims(x))
 end
 
-function unitfultimeseries(x::AbstractTimeSeries)
+function unitfultimeseries(x::AbstractTimeseries)
     if timeunit(x) == NoUnits
         @warn "No time units found for unitful time series. Assuming seconds."
         return unitfultimeseries(x, u"s")
@@ -97,9 +97,9 @@ function unitfultimeseries(x::AbstractTimeSeries)
 end
 
 """
-    dimunit(x::UnitfulTimeSeries, dim)
+    dimunit(x::UnitfulTimeseries, dim)
 
-Returns the unit associated with the specified dimension `dim` of a [`UnitfulTimeSeries`](@ref).
+Returns the unit associated with the specified dimension `dim` of a [`UnitfulTimeseries`](@ref).
 
 ## Examples
 ```@example 1
@@ -113,9 +113,9 @@ julia> TimeseriesBase.dimunit(ts, 𝑡) == u"ms"
 dimunit(x::AbstractToolsArray, dim) = dims(x, dim) |> eltype |> unit
 
 """
-    timeunit(x::UnitfulTimeSeries)
+    timeunit(x::UnitfulTimeseries)
 
-Returns the time units associated with a [`UnitfulTimeSeries`].
+Returns the time units associated with a [`UnitfulTimeseries`].
 
 ## Examples
 ```@example 1
@@ -126,7 +126,7 @@ julia> ts = Timeseries(x, (t)u"ms");
 julia> timeunit(ts) == u"ms"
 ```
 """
-timeunit(x::AbstractTimeSeries) = dimunit(x, 𝑡)
+timeunit(x::AbstractTimeseries) = dimunit(x, 𝑡)
 
 """
     frequnit(x::UnitfulSpectrum)
@@ -148,7 +148,7 @@ frequnit(x::AbstractSpectrum) = dimunit(x, 𝑓)
 """
     unit(x::AbstractArray)
 
-Returns the units associated with the elements of an [`UnitfulTimeSeries`](@ref) or [`UnitfulSpectrum`](@ref).
+Returns the units associated with the elements of an [`UnitfulTimeseries`](@ref) or [`UnitfulSpectrum`](@ref).
 
 ## Examples
 ```@example 1
@@ -159,8 +159,8 @@ julia> ts = Timeseries(x, (t)u"ms")*u"V";
 julia> unit(ts) == u"V"
 ```
 """
-unit(x::Union{<:AbstractTimeSeries, AbstractSpectrum}) = x |> eltype |> unit
-unit(x::Union{<:AbstractTimeSeries{Any}, AbstractSpectrum{Any}}) = NoUnits
+unit(x::Union{<:AbstractTimeseries, AbstractSpectrum}) = x |> eltype |> unit
+unit(x::Union{<:AbstractTimeseries{Any}, AbstractSpectrum{Any}}) = NoUnits
 
 function ustripall(x::AbstractDimArray)
     x = set(x, ustripall.(parent(x)))

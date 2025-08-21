@@ -4,10 +4,10 @@
     ts = (1:1000)u"s"
     x = @test_nowarn Timeseries(randn(1000), ts)
     @test Timeseries(collect(x), ustripall(ts)u"s") == x
-    @test x isa AbstractTimeSeries
-    @test x isa UnitfulTimeSeries
-    @test x isa RegularTimeSeries
-    @test x isa UnivariateTimeSeries
+    @test x isa AbstractTimeseries
+    @test x isa UnitfulTimeseries
+    @test x isa RegularTimeseries
+    @test x isa UnivariateTimeseries
 
     @test step(x) == step(ts)
     @test samplingrate(x) == 1 / step(ts)

@@ -31,7 +31,7 @@ const FreqIndex = Tuple{A, Vararg{DimensionalData.Dimension}} where {A <: 𝑓}
 A type alias for an `AbstractToolsArray` in which the first dimension is [`𝑓`](@ref)requency.
 """
 const AbstractSpectrum = AbstractToolsArray{T, N, <:FreqIndex, B} where {T, N, B}
-freqs(x::AbstractSpectrum) = dims(x, 𝑓) |> val
+freqs(x::AbstractSpectrum) = lookup(x, 𝑓) |> val
 
 """
     RegularFreqIndex
@@ -90,8 +90,8 @@ const RegularTimeFreqIndex = Tuple{T, F,
                                                              F <: 𝑓}
 
 const AbstractSpectrogram = AbstractToolsArray{T, N, <:TimeFreqIndex, B} where {T, N, B}
-times(x::AbstractSpectrogram) = dims(x, 𝑡) |> val
-freqs(x::AbstractSpectrogram) = dims(x, 𝑓) |> val
+times(x::AbstractSpectrogram) = lookup(x, 𝑡) |> val
+freqs(x::AbstractSpectrogram) = lookup(x, 𝑓) |> val
 
 const MultivariateSpectrogram = AbstractSpectrogram{T, 3} where {T}
 

@@ -109,9 +109,9 @@ end
 @testitem "TimeseriesBase.jl" begin
     ts = 1:100
     x = @test_nowarn Timeseries(randn(100), ts)
-    @test x isa AbstractTimeSeries
-    @test x isa RegularTimeSeries
-    @test x isa UnivariateTimeSeries
+    @test x isa AbstractTimeseries
+    @test x isa RegularTimeseries
+    @test x isa UnivariateTimeseries
 
     @test step(x) == step(ts)
     @test samplingrate(x) == 1 / step(ts)
@@ -147,9 +147,9 @@ end
 @testitem "Multivariate time series" begin
     ts = 1:100
     x = @test_nowarn Timeseries(randn(100, 5), ts, 1:5)
-    @test x isa AbstractTimeSeries
-    @test x isa RegularTimeSeries
-    @test x isa MultivariateTimeSeries
+    @test x isa AbstractTimeseries
+    @test x isa RegularTimeseries
+    @test x isa MultivariateTimeseries
 
     @test step(x) == step(ts)
     @test samplingrate(x) == 1 / step(ts)
@@ -161,23 +161,23 @@ end
 
 @testitem "Multidimensional time series" begin
     x = @test_nowarn Timeseries(randn(100, 10), 𝑡(1:100), X(1:10))
-    @test x isa AbstractTimeSeries
-    @test x isa RegularTimeSeries
-    @test x isa MultidimensionalTimeSeries
+    @test x isa AbstractTimeseries
+    @test x isa RegularTimeseries
+    @test x isa MultidimensionalTimeseries
 
     x = @test_nowarn Timeseries(randn(100, 10, 10), 𝑡(1:100), X(1:10), Y(1:10))
-    @test x isa AbstractTimeSeries
-    @test x isa RegularTimeSeries
-    @test x isa MultidimensionalTimeSeries
+    @test x isa AbstractTimeseries
+    @test x isa RegularTimeseries
+    @test x isa MultidimensionalTimeseries
     @test_nowarn x[𝑡(Near(4:10))]
 
     x = @test_nowarn Timeseries(randn(100, 10, 10), 𝑡(1:100), X(randn(10) |> sort), Y(1:10))
-    @test x isa AbstractTimeSeries
-    @test x isa RegularTimeSeries
-    @test !(x isa MultidimensionalTimeSeries)
+    @test x isa AbstractTimeseries
+    @test x isa RegularTimeseries
+    @test !(x isa MultidimensionalTimeseries)
 
     x = @test_nowarn Timeseries(randn(100), 𝑡(sort(randn(100))))
-    @test x isa AbstractTimeSeries
-    @test !(x isa RegularTimeSeries)
-    @test !(x isa MultidimensionalTimeSeries)
+    @test x isa AbstractTimeseries
+    @test !(x isa RegularTimeseries)
+    @test !(x isa MultidimensionalTimeseries)
 end

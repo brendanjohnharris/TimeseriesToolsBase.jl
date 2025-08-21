@@ -1,15 +1,15 @@
 module TimeSeries
 
-export AbstractTimeSeries, AbstractTS,
-       UnivariateTimeSeries, UnivariateTS,
-       MultivariateTimeSeries, MultivariateTS,
-       RegularTimeSeries, RegularTS,
+export AbstractTimeseries, AbstractTS,
+       UnivariateTimeseries, UnivariateTS,
+       MultivariateTimeseries, MultivariateTS,
+       RegularTimeseries, RegularTS,
        UnivariateRegular, MultivariateRegular,
-       IrregularTimeSeries, IrregularTS,
+       IrregularTimeseries, IrregularTS,
        TimeIndex, RegularIndex, RegularTimeIndex,
        IrregularIndex, IrregularTimeIndex,
-       TimeSeries, Timeseries,
-       MultidimensionalIndex, MultidimensionalTimeSeries, MultidimensionalTS,
+       Timeseries, Timeseries,
+       MultidimensionalIndex, MultidimensionalTimeseries, MultidimensionalTS,
        SpikeTrain, MultivariateSpikeTrain, UnivariateSpikeTrain,
        spiketrain, spiketimes
 
@@ -27,26 +27,26 @@ A type alias for a tuple containing a time dimension and any number of other dim
 const TimeIndex = Tuple{A, Vararg{Dimension}} where {A <: TimeDim}
 
 """
-    AbstractTimeSeries{T, N, B}
+    AbstractTimeseries{T, N, B}
 
 A type alias for an [AbstractDimArray](https://rafaqz.github.io/DimensionalData.jl/stable/api/#DimensionalData.AbstractDimArray) with a time index.
 """
-const AbstractTimeSeries = AbstractTS = AbstractToolsArray{T, N, <:TimeIndex,
+const AbstractTimeseries = AbstractTS = AbstractToolsArray{T, N, <:TimeIndex,
                                                            B} where {T, N, B}
 
 """
-    UnivariateTimeSeries{T}
+    UnivariateTimeseries{T}
 
 A type alias for a time series with one variable (a vector with only a `Ti` dimension).
 """
-const UnivariateTimeSeries = UnivariateTS = AbstractTimeSeries{T, 1} where {T}
+const UnivariateTimeseries = UnivariateTS = AbstractTimeseries{T, 1} where {T}
 
 """
-    MultivariateTimeSeries{T}
+    MultivariateTimeseries{T}
 
 A type alias for a multivariate time series (A matrix, with a first `Ti` dimension and an arbitrary second dimension).
 """
-const MultivariateTimeSeries = MultivariateTS = AbstractTimeSeries{T, 2} where {T}
+const MultivariateTimeseries = MultivariateTS = AbstractTimeseries{T, 2} where {T}
 
 """
     Var
@@ -71,11 +71,11 @@ const RegularTimeIndex = Tuple{A,
                                Vararg{Dimension}} where {A <: TimeDim{<:RegularIndex}}
 
 """
-    RegularTimeSeries{T, N, B}
+    RegularTimeseries{T, N, B}
 
 A type alias for a regularly sampled time series.
 """
-const RegularTimeSeries = RegularTS = AbstractToolsArray{T, N, <:RegularTimeIndex,
+const RegularTimeseries = RegularTS = AbstractToolsArray{T, N, <:RegularTimeIndex,
                                                          B} where {T, N, B}
 
 const MultidimensionalIndex = Tuple{A,
@@ -89,9 +89,9 @@ const MultidimensionalIndex = Tuple{A,
 """
 A multidimensional time series has a regular sampling over a dimension other than time; a one-dimensional time series can be thought of as a field over an even grid in 1 dimension that fluctuates over time.
 """
-const MultidimensionalTimeSeries = AbstractToolsArray{T, N, <:MultidimensionalIndex,
+const MultidimensionalTimeseries = AbstractToolsArray{T, N, <:MultidimensionalIndex,
                                                       B} where {T, N, B}
-const MultidimensionalTS = MultidimensionalTimeSeries
+const MultidimensionalTS = MultidimensionalTimeseries
 
 """
     IrregularIndex
@@ -114,19 +114,19 @@ const IrregularTimeIndex = Tuple{A,
                                                            TimeDim{<:IrregularIndex}}
 
 """
-    IrregularTimeSeries
+    IrregularTimeseries
 
 A type alias for a potentially irregularly sampled time series.
 """
-const IrregularTimeSeries = IrregularTS = AbstractToolsArray{T, N, <:IrregularTimeIndex,
+const IrregularTimeseries = IrregularTS = AbstractToolsArray{T, N, <:IrregularTimeIndex,
                                                              B} where {T, N, B}
 
 """
-    BinaryTimeSeries
+    BinaryTimeseries
 
 A type alias for a time series of bits.
 """
-const BinaryTimeSeries = SpikeTrain = BinaryTS = AbstractToolsArray{T, N, <:TimeIndex,
+const BinaryTimeseries = SpikeTrain = BinaryTS = AbstractToolsArray{T, N, <:TimeIndex,
                                                                     B} where {T <: Bool, N,
                                                                               B}
 
@@ -137,11 +137,11 @@ A type alias for a spike-train time series, which contains spike times in the ti
 """
 SpikeTrain
 
-const UnivariateSpikeTrain = typeintersect(UnivariateTimeSeries, SpikeTrain)
-const MultivariateSpikeTrain = typeintersect(MultivariateTimeSeries, SpikeTrain)
+const UnivariateSpikeTrain = typeintersect(UnivariateTimeseries, SpikeTrain)
+const MultivariateSpikeTrain = typeintersect(MultivariateTimeseries, SpikeTrain)
 
 function spiketrain(x; kwargs...)
-    TimeSeries(sort(x), trues(length(x)); kwargs...)
+    Timeseries(sort(x), trues(length(x)); kwargs...)
 end
 
 function spiketimes(x::UnivariateSpikeTrain)
@@ -163,15 +163,15 @@ julia> using TimeseriesBase, Unitful;
 julia> t = 1:100
 julia> x = rand(100)
 julia> ts = Timeseries(x, t)
-julia> ts isa typeintersect(UnivariateTimeSeries, RegularTimeSeries)
+julia> ts isa typeintersect(UnivariateTimeseries, RegularTimeseries)
 ```
 """
 function Timeseries(x, t, dims::Vararg{<:Dimension}; kwargs...)
-    ToolsArray(x, (𝑡(t), dims...); kwargs...)
+    ToolsArray(x, 𝑡(t), dims...; kwargs...)
 end
 
 """
-    TimeSeries(x, t, v)
+    Timeseries(x, t, v)
 
 Constructs a multivariate time series with time t, variable v, and data x.
 
@@ -181,7 +181,7 @@ julia> t = 1:100;
 julia> v = [:a, :b, :c];
 julia> x = rand(100, 3);
 julia> mts = Timeseries(x, t, v)
-julia> mts isa typeintersect(MultivariateTimeSeries, RegularTimeSeries)
+julia> mts isa typeintersect(MultivariateTimeseries, RegularTimeseries)
 ```
 """
 function Timeseries(x, t, v, dims::Vararg{<:Dimension}; kwargs...)
@@ -192,7 +192,7 @@ Timeseries(x, dims::Vararg{<:Dimension}; kwargs...) = ToolsArray(x, dims; kwargs
 
 convertconst(a, _) = a
 
-const UnivariateRegular = typeintersect(UnivariateTimeSeries, RegularTimeSeries)
-const MultivariateRegular = typeintersect(MultivariateTimeSeries, RegularTimeSeries)
+const UnivariateRegular = typeintersect(UnivariateTimeseries, RegularTimeseries)
+const MultivariateRegular = typeintersect(MultivariateTimeseries, RegularTimeseries)
 
 end
