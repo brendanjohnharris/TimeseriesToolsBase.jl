@@ -130,7 +130,7 @@ const UnivariateSpikeTrain = typeintersect(UnivariateTimeseries, SpikeTrain)
 const MultivariateSpikeTrain = typeintersect(MultivariateTimeseries, SpikeTrain)
 
 function spiketrain(x; kwargs...)
-    Timeseries(sort(x), trues(length(x)); kwargs...)
+    Timeseries(trues(length(x)), sort(x); kwargs...)
 end
 
 function spiketimes(x::UnivariateSpikeTrain)
